@@ -39,12 +39,12 @@ sut_real_t sut_fp_mul(sut_real_t a, sut_real_t b) {
 sut_real_t sut_fp_div(sut_real_t a, sut_real_t b) {
     if (b == 0) return SUT_FP_C(0);
     int32_t neg = 1;
-    uint64_t ua = (uint64_t)(a < 0 ? -a : a);
-    uint64_t ub = (uint64_t)(b < 0 ? -b : b);
+    uint64_t ua = a < 0 ? -(uint64_t)a : (uint64_t)a;
+    uint64_t ub = b < 0 ? -(uint64_t)b : (uint64_t)b;
     if (a < 0) neg = -neg;
     if (b < 0) neg = -neg;
     uint32_t result = (uint32_t)((ua << 16) / ub);
-    return (sut_real_t)(result * neg);
+    return (sut_real_t)((int32_t)result * neg);
 }
 
 sut_real_t sut_fp_sqrt(sut_real_t v) {
