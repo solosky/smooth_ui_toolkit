@@ -25,6 +25,8 @@ static void on_draw(void* ctx) {
         app->anim_y.to = SUT_REAL_FROM_INT(GetMouseY());
         app->anim_x.from = app->anim_x.current;
         app->anim_y.from = app->anim_y.current;
+        app->anim_x.velocity = 0;
+        app->anim_y.velocity = 0;
         app->anim_x.elapsed = 0;
         app->anim_y.elapsed = 0;
     }

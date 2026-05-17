@@ -33,7 +33,12 @@ sut_real_t sut_fp_sqrt(sut_real_t v) { return sqrtf(v); }
 #else
 
 sut_real_t sut_fp_mul(sut_real_t a, sut_real_t b) {
-    return (sut_real_t)(((int64_t)a * b) >> 16);
+    int64_t raw = (int64_t)a * b;
+    if (raw > (int64_t)INT32_MAX * SUT_FP_SCALE)
+        return INT32_MAX;
+    if (raw < (int64_t)INT32_MIN * SUT_FP_SCALE)
+        return INT32_MIN;
+    return (sut_real_t)(raw >> 16);
 }
 
 sut_real_t sut_fp_div(sut_real_t a, sut_real_t b) {
