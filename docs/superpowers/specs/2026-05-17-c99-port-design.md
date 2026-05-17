@@ -43,6 +43,24 @@ examples/
 
 All integer types use `<stdint.h>` fixed-width types (`uint8_t`, `uint16_t`, `uint32_t`, `int16_t`, `int32_t`). `bool` from `<stdbool.h>`. These guarantee consistent memory layout across platforms.
 
+## Fixed-Point Convention
+
+All real-number values use Q16.16 fixed-point (`int32_t`) to avoid software float overhead on MCUs without FPU.
+
+```c
+typedef int32_t sut_real_t;
+#define SUT_FP_SCALE 65536
+#define SUT_FP_C(v)  ((sut_real_t)((v) * SUT_FP_SCALE))
+```
+
+**Properties:**
+- Range: [-32768, +32767] (ample for animation values)
+- Resolution: 1/65536 ≈ 0.000015 (exceeds float precision for values near 0)
+- Addition/subtraction: single `+`/`-` instruction
+- Multiplication: `(int64_t)a * b >> 16` (needs 64-bit intermediate to avoid overflow)
+- Division: `(int64_t)a << 16 / b`
+- No `sin`/`cos`/`exp`/`sqrt` in libm — all implemented with integer algorithms
+
 ## Memory Allocator
 
 Global allocator, set once at startup via `sut_allocator_set()`. Defaults to `malloc`/`free` if not set.
@@ -80,21 +98,23 @@ typedef enum {
 } sut_animate_mode_t;
 
 typedef struct {
-    float   from;
-    float   to;
-    float   current;
-    float   elapsed;
-    float   delay;
+    sut_real_t from;
+    sut_real_t to;
+    sut_real_t current;
+    sut_real_t elapsed;
+    sut_real_t delay;
+
+    sut_real_t velocity;   // spring state (unused in easing mode)
 
     union {
         struct {
-            float            duration;
+            sut_real_t       duration;
             sut_easing_fn_t  easing;
         } easing;
         sut_spring_params_t spring;
     } config;
 
-    void    (*on_update)(void* ctx, float value);
+    void    (*on_update)(void* ctx, sut_real_t value);
     void    (*on_complete)(void* ctx);
     void*   ctx;
 
@@ -103,9 +123,9 @@ typedef struct {
     uint8_t repeat_count;
 } sut_animate_t;
 
-void sut_animate_init_easing(sut_animate_t* a, float from, float to, float duration);
-void sut_animate_init_spring(sut_animate_t* a, float from, float to);
-bool sut_animate_update(sut_animate_t* a, float dt);
+void sut_animate_init_easing(sut_animate_t* a, sut_real_t from, sut_real_t to, sut_real_t duration);
+void sut_animate_init_spring(sut_animate_t* a, sut_real_t from, sut_real_t to);
+bool sut_animate_update(sut_animate_t* a, sut_real_t dt);
 void sut_animate_reset(sut_animate_t* a);
 ```
 
@@ -116,12 +136,14 @@ typedef struct {
     sut_vec2_t from;
     sut_vec2_t to;
     sut_vec2_t current;
-    float      elapsed;
-    float      delay;
+    sut_real_t elapsed;
+    sut_real_t delay;
+
+    sut_vec2_t velocity;   // spring state
 
     union {
         struct {
-            float            duration;
+            sut_real_t       duration;
             sut_easing_fn_t  easing;
         } easing;
         sut_spring_params_t spring;
@@ -134,10 +156,10 @@ typedef struct {
     uint8_t mode;
 } sut_vec2_animate_t;
 
-void sut_vec2_animate_init_easing(sut_vec2_animate_t* a, sut_vec2_t from, sut_vec2_t to, float duration);
+void sut_vec2_animate_init_easing(sut_vec2_animate_t* a, sut_vec2_t from, sut_vec2_t to, sut_real_t duration);
 void sut_vec2_animate_init_spring(sut_vec2_animate_t* a, sut_vec2_t from, sut_vec2_t to);
 void sut_vec2_animate_move_to(sut_vec2_animate_t* a, sut_vec2_t target);
-bool sut_vec2_animate_update(sut_vec2_animate_t* a, float dt);
+bool sut_vec2_animate_update(sut_vec2_animate_t* a, sut_real_t dt);
 ```
 
 Vector4 animation mirrors Vector2 with `sut_vec4_t` fields.
@@ -146,8 +168,8 @@ Vector4 animation mirrors Vector2 with `sut_vec4_t` fields.
 
 ```c
 typedef struct {
-    float target;
-    float duration;
+    sut_real_t      target;
+    sut_real_t      duration;
     sut_easing_fn_t easing;
 } sut_animate_step_t;
 
@@ -164,7 +186,7 @@ typedef struct {
 int  sut_sequence_init(sut_sequence_t* s);
 void sut_sequence_deinit(sut_sequence_t* s);
 int  sut_sequence_push(sut_sequence_t* s, sut_animate_step_t step);
-bool sut_sequence_update(sut_sequence_t* s, float dt);
+bool sut_sequence_update(sut_sequence_t* s, sut_real_t dt);
 ```
 
 Steps array is dynamically allocated via the global allocator. Fixed-step animations that advance through the list each cycle.
@@ -172,82 +194,108 @@ Steps array is dynamically allocated via the global allocator. Fixed-step animat
 ## Module: Easing Functions
 
 ```c
-typedef float (*sut_easing_fn_t)(float t);
+typedef sut_real_t (*sut_easing_fn_t)(sut_real_t t);
 
-float sut_ease_linear(float t);
-float sut_ease_quad_in(float t);
-float sut_ease_quad_out(float t);
-float sut_ease_quad_in_out(float t);
-float sut_ease_cubic_in(float t);
-float sut_ease_cubic_out(float t);
-float sut_ease_cubic_in_out(float t);
-float sut_ease_quart_in(float t);
-float sut_ease_quart_out(float t);
-float sut_ease_quart_in_out(float t);
-float sut_ease_quint_in(float t);
-float sut_ease_quint_out(float t);
-float sut_ease_quint_in_out(float t);
-float sut_ease_sine_in(float t);
-float sut_ease_sine_out(float t);
-float sut_ease_sine_in_out(float t);
-float sut_ease_expo_in(float t);
-float sut_ease_expo_out(float t);
-float sut_ease_expo_in_out(float t);
-float sut_ease_circ_in(float t);
-float sut_ease_circ_out(float t);
-float sut_ease_circ_in_out(float t);
-float sut_ease_back_in(float t);
-float sut_ease_back_out(float t);
-float sut_ease_back_in_out(float t);
-float sut_ease_elastic_in(float t);
-float sut_ease_elastic_out(float t);
-float sut_ease_elastic_in_out(float t);
-float sut_ease_bounce_in(float t);
-float sut_ease_bounce_out(float t);
-float sut_ease_bounce_in_out(float t);
-float sut_ease_cubic_bezier(float t, float x1, float y1, float x2, float y2);
+// Simple polynomial easings — computed in fixed-point
+sut_real_t sut_ease_linear(sut_real_t t);
+sut_real_t sut_ease_quad_in(sut_real_t t);
+sut_real_t sut_ease_quad_out(sut_real_t t);
+sut_real_t sut_ease_quad_in_out(sut_real_t t);
+sut_real_t sut_ease_cubic_in(sut_real_t t);
+sut_real_t sut_ease_cubic_out(sut_real_t t);
+sut_real_t sut_ease_cubic_in_out(sut_real_t t);
+sut_real_t sut_ease_quart_in(sut_real_t t);
+sut_real_t sut_ease_quart_out(sut_real_t t);
+sut_real_t sut_ease_quart_in_out(sut_real_t t);
+sut_real_t sut_ease_quint_in(sut_real_t t);
+sut_real_t sut_ease_quint_out(sut_real_t t);
+sut_real_t sut_ease_quint_in_out(sut_real_t t);
+
+// Complex easings — pre-computed 256-entry LUTs in flash
+extern const sut_real_t sut_ease_sine_in_lut[257];
+extern const sut_real_t sut_ease_sine_out_lut[257];
+extern const sut_real_t sut_ease_sine_in_out_lut[257];
+extern const sut_real_t sut_ease_expo_in_lut[257];
+extern const sut_real_t sut_ease_expo_out_lut[257];
+extern const sut_real_t sut_ease_expo_in_out_lut[257];
+extern const sut_real_t sut_ease_circ_in_lut[257];
+extern const sut_real_t sut_ease_circ_out_lut[257];
+extern const sut_real_t sut_ease_circ_in_out_lut[257];
+extern const sut_real_t sut_ease_back_in_lut[257];
+extern const sut_real_t sut_ease_back_out_lut[257];
+extern const sut_real_t sut_ease_back_in_out_lut[257];
+extern const sut_real_t sut_ease_elastic_in_lut[257];
+extern const sut_real_t sut_ease_elastic_out_lut[257];
+extern const sut_real_t sut_ease_elastic_in_out_lut[257];
+extern const sut_real_t sut_ease_bounce_in_lut[257];
+extern const sut_real_t sut_ease_bounce_out_lut[257];
+extern const sut_real_t sut_ease_bounce_in_out_lut[257];
+
+// Wrapper: t [0, SUT_FP_SCALE], idx = t >> 8, linear interpolate LUT[idx] & LUT[idx+1]
+sut_real_t sut_ease_lut(const sut_real_t* lut, sut_real_t t);
+
+// Cubic bezier — computed via De Casteljau in fixed-point
+sut_real_t sut_ease_cubic_bezier(sut_real_t t, sut_real_t x1, sut_real_t y1, sut_real_t x2, sut_real_t y2);
 ```
 
-All are pure functions with no state.
+**Implementation strategy:**
+- Simple polynomials (linear ~ quint): fixed-point evaluation, `((int64_t)a * b) >> 16` intermediates
+- Complex functions (sine, expo, circ, back, elastic, bounce): single `sut_ease_lut()` call per function
+- Each LUT: 257 × 4 = 1028 bytes in flash, reads only, no runtime computation
+- Cubic bezier: De Casteljau algorithm with fixed-point math
 
 ## Module: Spring Physics
 
+Spring uses **Euler integration** per frame (not analytic solution) — no `sin`/`cos`/`exp` needed:
+
 ```c
 typedef struct {
-    float stiffness;
-    float damping;
-    float mass;
-    float initial_velocity;
+    sut_real_t stiffness;
+    sut_real_t damping;
+    sut_real_t mass;
 } sut_spring_params_t;
 
-float sut_spring_evaluate(float t, sut_spring_params_t* p);
+// Spring state stored inside sut_animate_t
+typedef struct {
+    sut_real_t velocity;
+} sut_spring_state_t;
+
+// Per-frame Euler integration
+// force = -k*x - c*v;  a = force/m;  v += a*dt;  x += v*dt
+void sut_spring_step(sut_real_t* x, sut_spring_state_t* s, sut_spring_params_t* p, sut_real_t target, sut_real_t dt);
 ```
+
+This replaces the analytic spring solver with a fixed-timestep simulation. Each animation update call advances the spring by `dt`. No pre-computation needed, responds to runtime target changes.
 
 ## Module: Math Utilities
 
 ```c
-float sut_clamp(float v, float min, float max);
-float sut_lerp(float a, float b, float t);
-float sut_map(float v, float a1, float b1, float a2, float b2);
+sut_real_t sut_clamp(sut_real_t v, sut_real_t min, sut_real_t max);
+sut_real_t sut_lerp(sut_real_t a, sut_real_t b, sut_real_t t);
+sut_real_t sut_map(sut_real_t v, sut_real_t a1, sut_real_t b1, sut_real_t a2, sut_real_t b2);
+
+// Fixed-point arithmetic helpers
+sut_real_t sut_fp_mul(sut_real_t a, sut_real_t b);  // ((int64_t)a * b) >> 16
+sut_real_t sut_fp_div(sut_real_t a, sut_real_t b);  // (int64_t)a << 16 / b
+sut_real_t sut_fp_sqrt(sut_real_t v);                // Newton iteration
 
 // Vector2
-typedef struct { float x, y; } sut_vec2_t;
-sut_vec2_t sut_vec2(float x, float y);
+typedef struct { sut_real_t x, y; } sut_vec2_t;
+sut_vec2_t sut_vec2(sut_real_t x, sut_real_t y);
 sut_vec2_t sut_vec2_add(sut_vec2_t a, sut_vec2_t b);
 sut_vec2_t sut_vec2_sub(sut_vec2_t a, sut_vec2_t b);
-sut_vec2_t sut_vec2_mul(sut_vec2_t a, float s);
-float      sut_vec2_dot(sut_vec2_t a, sut_vec2_t b);
-float      sut_vec2_length(sut_vec2_t a);
+sut_vec2_t sut_vec2_mul(sut_vec2_t a, sut_real_t s);
+sut_real_t sut_vec2_dot(sut_vec2_t a, sut_vec2_t b);
+sut_real_t sut_vec2_length(sut_vec2_t a);
 sut_vec2_t sut_vec2_normalize(sut_vec2_t a);
-sut_vec2_t sut_vec2_lerp(sut_vec2_t a, sut_vec2_t b, float t);
+sut_vec2_t sut_vec2_lerp(sut_vec2_t a, sut_vec2_t b, sut_real_t t);
 
 // Vector4
-typedef struct { float x, y, z, w; } sut_vec4_t;
-sut_vec4_t sut_vec4(float x, float y, float z, float w);
+typedef struct { sut_real_t x, y, z, w; } sut_vec4_t;
 // ... same operations as vec2
 
 // Rect
-typedef struct { float x, y, w, h; } sut_rect_t;
+typedef struct { sut_real_t x, y, w, h; } sut_rect_t;
 bool sut_rect_contains(sut_rect_t r, sut_vec2_t p);
 bool sut_rect_overlaps(sut_rect_t a, sut_rect_t b);
 ```
@@ -260,8 +308,8 @@ typedef struct { uint8_t r, g, b, a; } sut_rgba_t;
 
 sut_rgb_t  sut_rgb_from_hex(uint32_t hex);
 uint32_t   sut_rgb_to_hex(sut_rgb_t c);
-sut_rgb_t  sut_rgb_from_hsv(float h, float s, float v);
-sut_rgb_t  sut_rgb_blend_opacity(sut_rgb_t bg, sut_rgb_t fg, float opacity);
+sut_rgb_t  sut_rgb_from_hsv(sut_real_t h, sut_real_t s, sut_real_t v);
+sut_rgb_t  sut_rgb_blend_opacity(sut_rgb_t bg, sut_rgb_t fg, sut_real_t opacity);
 sut_rgb_t  sut_rgb_blend_difference(sut_rgb_t bg, sut_rgb_t fg);
 ```
 
