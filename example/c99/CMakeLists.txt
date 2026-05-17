@@ -1,18 +1,16 @@
-# Raylib (installed to /tmp/raylib-install)
-set(RAYLIB_INC /tmp/raylib-install/include)
-set(RAYLIB_LIB /tmp/raylib-install/lib/libraylib.so)
+# Build raylib from submodule
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../third_party/raylib raylib_build)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../third_party/raylib/src)
 
 # SUT library includes
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../lib/include)
 
 # Raylib helper
 add_library(raylib_helper STATIC raylib_helper.c)
-target_include_directories(raylib_helper PUBLIC ${RAYLIB_INC})
 
 function(add_c99_example name source)
     add_executable(${name} ${source})
-    target_link_libraries(${name} raylib_helper sut ${RAYLIB_LIB} m)
-    target_include_directories(${name} PRIVATE ${RAYLIB_INC})
+    target_link_libraries(${name} raylib_helper sut raylib m)
 endfunction()
 
 add_c99_example(c99_animate            animate.c)

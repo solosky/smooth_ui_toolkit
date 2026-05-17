@@ -1,0 +1,6 @@
+[submodule "third_party/raylib"]
+	path = third_party/raylib
+	url = https://github.com/raysan5/raylib.git
+	# If the submodule is empty after cloning, run:
+	#   git submodule update --init --depth 1 --branch 5.5 third_party/raylib
+	branch = 5.5
