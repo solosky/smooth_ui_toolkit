@@ -45,21 +45,71 @@ All integer types use `<stdint.h>` fixed-width types (`uint8_t`, `uint16_t`, `ui
 
 ## Fixed-Point Convention
 
-All real-number values use Q16.16 fixed-point (`int32_t`) to avoid software float overhead on MCUs without FPU.
+All real-number values use Q16.16 fixed-point (`int32_t`) by default — avoids software float overhead on MCUs without FPU. Platforms with hardware FPU can switch to native `float` via compile-time option for better precision and performance.
+
+### Compile-time switch
 
 ```c
-typedef int32_t sut_real_t;
-#define SUT_FP_SCALE 65536
-#define SUT_FP_C(v)  ((sut_real_t)((v) * SUT_FP_SCALE))
+// sut_config.h — user configures before including library headers
+#define SUT_USE_FLOAT  // uncomment for FPU-enabled platforms (Cortex-M4F/M7/ESP32-S3, etc.)
+
+// --- Internal selection ---
+#ifdef SUT_USE_FLOAT
+    typedef float sut_real_t;
+    #define SUT_FP_SCALE  1.0f
+    #define SUT_FP_C(v)   (v)
+#else
+    typedef int32_t sut_real_t;
+    #define SUT_FP_SCALE  65536
+    #define SUT_FP_C(v)   ((sut_real_t)((v) * SUT_FP_SCALE))
+#endif
 ```
 
-**Properties:**
-- Range: [-32768, +32767] (ample for animation values)
-- Resolution: 1/65536 ≈ 0.000015 (exceeds float precision for values near 0)
-- Addition/subtraction: single `+`/`-` instruction
-- Multiplication: `(int64_t)a * b >> 16` (needs 64-bit intermediate to avoid overflow)
-- Division: `(int64_t)a << 16 / b`
-- No `sin`/`cos`/`exp`/`sqrt` in libm — all implemented with integer algorithms
+**When to use `SUT_USE_FLOAT`:**
+- Cortex-M4F, M7, M33 (hardware FPU)
+- ESP32-S3, ESP32-P4 (FPU)
+- RISC-V with FPU
+- Any platform where float is faster than simulated 64-bit multiply
+
+**Default (fixed-point):**
+- Cortex-M0, M3, M4 (no FPU)
+- ESP32, ESP32-C series
+- Low-end RISC-V (no FPU)
+
+### Conversion macros (work in both modes)
+
+```c
+#define SUT_REAL_FROM_INT(n)      ((sut_real_t)(n) * SUT_FP_SCALE)
+#define SUT_REAL_FROM_FLOAT(f)    ((sut_real_t)((f) * SUT_FP_SCALE))
+#define SUT_REAL_FROM_DOUBLE(d)   ((sut_real_t)((d) * SUT_FP_SCALE))
+#define SUT_REAL_TO_FLOAT(r)      ((float)(r) / SUT_FP_SCALE)
+#define SUT_REAL_TO_DOUBLE(r)     ((double)(r) / SUT_FP_SCALE)
+#define SUT_REAL_TO_INT(r)        ((int)((r) / SUT_FP_SCALE))
+```
+
+Examples:
+
+```c
+// fixed-point mode:   int32_t Q16.16
+// float mode:         native float
+sut_real_t v;
+
+v = SUT_FP_C(1.5f);          // compile-time: 98304     or  1.5f
+v = SUT_REAL_FROM_INT(42);   // runtime:      2752512   or  42.0f
+v = SUT_REAL_FROM_FLOAT(3.14f);                    // 205757   or  3.14f
+float  f = SUT_REAL_TO_FLOAT(v);
+int    n = SUT_REAL_TO_INT(v);
+```
+
+### Fixed-point properties (when SUT_USE_FLOAT is NOT defined)
+
+| Operation | Cost (32-bit MCU) | Implementation |
+|-----------|-------------------|----------------|
+| add/sub | 1 cycle | `a + b` |
+| multiply | ~3-10 cycles | `(int64_t)a * b >> 16` |
+| divide | ~20-60 cycles | `(int64_t)a << 16 / b` |
+| sqrt | ~50 cycles | Newton iteration |
+| sin/cos/exp | not used | Spring uses Euler integration, easing uses LUT |
 
 ## Memory Allocator
 
@@ -274,7 +324,7 @@ sut_real_t sut_clamp(sut_real_t v, sut_real_t min, sut_real_t max);
 sut_real_t sut_lerp(sut_real_t a, sut_real_t b, sut_real_t t);
 sut_real_t sut_map(sut_real_t v, sut_real_t a1, sut_real_t b1, sut_real_t a2, sut_real_t b2);
 
-// Fixed-point arithmetic helpers
+// Fixed-point arithmetic helpers (inline in float mode: a*b, a/b, sqrtf)
 sut_real_t sut_fp_mul(sut_real_t a, sut_real_t b);  // ((int64_t)a * b) >> 16
 sut_real_t sut_fp_div(sut_real_t a, sut_real_t b);  // (int64_t)a << 16 / b
 sut_real_t sut_fp_sqrt(sut_real_t v);                // Newton iteration
