@@ -21,3 +21,9 @@ if(SUT_BUILD_TEST)
     enable_testing()
     add_subdirectory(test)
 endif()
+
+# Example subdirectory
+option(SUT_BUILD_EXAMPLE "Build examples" ON)
+if(SUT_BUILD_EXAMPLE)
+    add_subdirectory(example)
+endif()
