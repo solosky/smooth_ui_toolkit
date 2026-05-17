@@ -19,6 +19,7 @@ sut_real_t sut_ease_quint_in(sut_real_t t);
 sut_real_t sut_ease_quint_out(sut_real_t t);
 sut_real_t sut_ease_quint_in_out(sut_real_t t);
 
+#ifndef SUT_USE_FLOAT
 extern const sut_real_t sut_ease_sine_in_lut[257];
 extern const sut_real_t sut_ease_sine_out_lut[257];
 extern const sut_real_t sut_ease_sine_in_out_lut[257];
@@ -58,6 +59,7 @@ sut_real_t sut_ease_bounce_out(sut_real_t t);
 sut_real_t sut_ease_bounce_in_out(sut_real_t t);
 
 sut_real_t sut_ease_lut(const sut_real_t* lut, sut_real_t t);
+#endif
 sut_real_t sut_ease_cubic_bezier(sut_real_t t, sut_real_t x1, sut_real_t y1, sut_real_t x2, sut_real_t y2);
 
 #endif

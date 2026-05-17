@@ -66,6 +66,8 @@ sut_real_t sut_ease_quint_in_out(sut_real_t t) {
     return SUT_FP_C(1) - sut_fp_mul(fp_pow5(SUT_FP_C(1) - t), SUT_FP_C(16));
 }
 
+#ifndef SUT_USE_FLOAT
+
 sut_real_t sut_ease_lut(const sut_real_t* lut, sut_real_t t) {
     if (t <= SUT_FP_C(0)) return lut[0];
     if (t >= SUT_FP_C(1)) return lut[256];
@@ -92,6 +94,8 @@ sut_real_t sut_ease_elastic_in_out(sut_real_t t) { return sut_ease_lut(sut_ease_
 sut_real_t sut_ease_bounce_in(sut_real_t t) { return sut_ease_lut(sut_ease_bounce_in_lut, t); }
 sut_real_t sut_ease_bounce_out(sut_real_t t) { return sut_ease_lut(sut_ease_bounce_out_lut, t); }
 sut_real_t sut_ease_bounce_in_out(sut_real_t t) { return sut_ease_lut(sut_ease_bounce_in_out_lut, t); }
+
+#endif // SUT_USE_FLOAT
 
 sut_real_t sut_ease_cubic_bezier(sut_real_t t, sut_real_t x1, sut_real_t y1, sut_real_t x2, sut_real_t y2) {
     sut_real_t low = SUT_FP_C(0), high = SUT_FP_C(1);

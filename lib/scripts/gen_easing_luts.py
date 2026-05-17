@@ -66,7 +66,7 @@ C2 = C1 * 1.525
 def back_in_out(t):
     if t < 0.5:
         return ((C2 + 1) * (2 * t) ** 3 - C2 * (2 * t) ** 2) / 2
-    return (1 + (C2 + 1) * (2 * t - 2) ** 3 + C2 * (2 * t - 2) ** 2) / 2
+    return ((2 * t - 2) ** 2 * ((C2 + 1) * (2 * t - 2) + C2) + 2) / 2
 
 
 C4 = 2 * math.pi / 3
@@ -115,6 +115,7 @@ def bounce_in_out(t):
     return (1 + bounce_out(2 * t - 1)) / 2
 
 
+print('#ifndef SUT_USE_FLOAT')
 print('#include "sut_easing.h"')
 print()
 
@@ -141,3 +142,5 @@ gen_lut("elastic_in_out", elastic_in_out)
 gen_lut("bounce_in", bounce_in)
 gen_lut("bounce_out", bounce_out)
 gen_lut("bounce_in_out", bounce_in_out)
+
+print('#endif')
