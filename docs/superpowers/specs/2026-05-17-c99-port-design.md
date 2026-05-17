@@ -39,6 +39,10 @@ examples/
   (ported examples)
 ```
 
+## Type Convention
+
+All integer types use `<stdint.h>` fixed-width types (`uint8_t`, `uint16_t`, `uint32_t`, `int16_t`, `int32_t`). `bool` from `<stdbool.h>`. These guarantee consistent memory layout across platforms.
+
 ## Memory Allocator
 
 Global allocator, set once at startup via `sut_allocator_set()`. Defaults to `malloc`/`free` if not set.
@@ -76,20 +80,27 @@ typedef enum {
 } sut_animate_mode_t;
 
 typedef struct {
-    sut_animate_mode_t mode;
-    float from;
-    float to;
-    float current;
-    float duration;
-    float elapsed;
-    float delay;
-    int   repeat;
-    int   repeat_count;
-    sut_easing_fn_t    easing_func;
-    sut_spring_params_t spring;
-    void (*on_update)(void* ctx, float value);
-    void (*on_complete)(void* ctx);
-    void* ctx;
+    float   from;
+    float   to;
+    float   current;
+    float   elapsed;
+    float   delay;
+
+    union {
+        struct {
+            float            duration;
+            sut_easing_fn_t  easing;
+        } easing;
+        sut_spring_params_t spring;
+    } config;
+
+    void    (*on_update)(void* ctx, float value);
+    void    (*on_complete)(void* ctx);
+    void*   ctx;
+
+    uint8_t mode;
+    uint8_t repeat;
+    uint8_t repeat_count;
 } sut_animate_t;
 
 void sut_animate_init_easing(sut_animate_t* a, float from, float to, float duration);
@@ -105,15 +116,22 @@ typedef struct {
     sut_vec2_t from;
     sut_vec2_t to;
     sut_vec2_t current;
-    sut_animate_mode_t mode;
-    float duration;
-    float elapsed;
-    float delay;
-    sut_easing_fn_t    easing_func;
-    sut_spring_params_t spring;
+    float      elapsed;
+    float      delay;
+
+    union {
+        struct {
+            float            duration;
+            sut_easing_fn_t  easing;
+        } easing;
+        sut_spring_params_t spring;
+    } config;
+
     void (*on_update)(void* ctx, sut_vec2_t value);
     void (*on_complete)(void* ctx);
     void* ctx;
+
+    uint8_t mode;
 } sut_vec2_animate_t;
 
 void sut_vec2_animate_init_easing(sut_vec2_animate_t* a, sut_vec2_t from, sut_vec2_t to, float duration);
@@ -135,12 +153,12 @@ typedef struct {
 
 typedef struct {
     sut_animate_step_t* steps;
-    int capacity;
-    int count;
-    int current;
     void (*on_step)(void* ctx, int index);
     void (*on_complete)(void* ctx);
-    void* ctx;
+    void*   ctx;
+    uint16_t capacity;
+    uint16_t count;
+    uint16_t current;
 } sut_sequence_t;
 
 int  sut_sequence_init(sut_sequence_t* s);
@@ -267,20 +285,20 @@ Global function pointers, user sets at startup. No default implementation.
 
 ```c
 typedef struct {
-    uint8_t* buffer;
-    int      element_size;
-    int      capacity;
-    int      head;
-    int      tail;
-    int      count;
-    bool     overwrite;
+    uint8_t*  buffer;
+    uint16_t  element_size;
+    uint16_t  capacity;
+    uint16_t  head;
+    uint16_t  tail;
+    uint16_t  count;
+    uint8_t   overwrite;
 } sut_ringbuf_t;
 
-int  sut_ringbuf_init(sut_ringbuf_t* rb, int element_size, int capacity);
+int  sut_ringbuf_init(sut_ringbuf_t* rb, uint16_t element_size, uint16_t capacity);
 void sut_ringbuf_deinit(sut_ringbuf_t* rb);
 int  sut_ringbuf_push(sut_ringbuf_t* rb, const void* data);
 int  sut_ringbuf_pop(sut_ringbuf_t* rb, void* out);
-int  sut_ringbuf_peek(sut_ringbuf_t* rb, int index, void* out);
+int  sut_ringbuf_peek(sut_ringbuf_t* rb, uint16_t index, void* out);
 void sut_ringbuf_clear(sut_ringbuf_t* rb);
 int  sut_ringbuf_count(sut_ringbuf_t* rb);
 ```
@@ -297,8 +315,8 @@ typedef struct {
 
 typedef struct {
     sut_slot_t* slots;
-    int         capacity;
-    int         count;
+    uint16_t    capacity;
+    uint16_t    count;
 } sut_signal_t;
 
 void sut_signal_init(sut_signal_t* sig);
@@ -318,14 +336,14 @@ typedef void (*sut_pool_dtor_fn)(void* obj);
 
 typedef struct {
     uint8_t*  memory;
-    int       object_size;
-    int       capacity;
     int*      free_list;
-    int       free_count;
     uint8_t*  used_flags;
+    uint16_t  object_size;
+    uint16_t  capacity;
+    int16_t   free_count;
 } sut_pool_t;
 
-int   sut_pool_init(sut_pool_t* pool, int object_size, int capacity);
+int   sut_pool_init(sut_pool_t* pool, uint16_t object_size, uint16_t capacity);
 void  sut_pool_deinit(sut_pool_t* pool);
 void* sut_pool_acquire(sut_pool_t* pool, sut_pool_ctor_fn ctor, void* ctx);
 void  sut_pool_release(sut_pool_t* pool, void* obj);
