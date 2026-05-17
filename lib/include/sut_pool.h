@@ -22,5 +22,6 @@ void  sut_pool_deinit(sut_pool_t* pool);
 void* sut_pool_acquire(sut_pool_t* pool, sut_pool_ctor_fn ctor, void* ctx);
 void  sut_pool_release(sut_pool_t* pool, void* obj);
 int   sut_pool_available(sut_pool_t* pool);
+void  sut_pool_foreach(sut_pool_t* pool, void (*fn)(void* obj, void* ctx), void* ctx);
 
 #endif

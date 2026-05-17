@@ -51,3 +51,10 @@ void sut_pool_release(sut_pool_t* pool, void* obj) {
 int sut_pool_available(sut_pool_t* pool) {
     return pool->free_count;
 }
+
+void sut_pool_foreach(sut_pool_t* pool, void (*fn)(void* obj, void* ctx), void* ctx) {
+    for (uint16_t i = 0; i < pool->capacity; i++) {
+        if (pool->used_flags[i])
+            fn(pool->memory + (size_t)i * pool->object_size, ctx);
+    }
+}
