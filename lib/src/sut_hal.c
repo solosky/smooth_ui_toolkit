@@ -1,4 +1,5 @@
 #include "sut_hal.h"
+#include <stddef.h>
 
 static sut_get_tick_t _get_tick = NULL;
 static sut_delay_t _delay = NULL;

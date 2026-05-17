@@ -10,6 +10,11 @@ include_directories(include)
 
 add_library(sut STATIC ${SUT_SRCS})
 
+# Need -lm for sqrtf when SUT_USE_FLOAT is enabled
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
+    target_link_libraries(sut PUBLIC m)
+endif()
+
 # Test subdirectory
 option(SUT_BUILD_TEST "Build tests" ON)
 if(SUT_BUILD_TEST)
