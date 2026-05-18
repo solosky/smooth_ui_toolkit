@@ -32,9 +32,60 @@ static int test_seq_3_steps() {
     PASS(); return 0;
 }
 
+static int test_empty_sequence() {
+    TEST("empty sequence returns true immediately");
+    mc_sequence_t seq;
+    CHECK(mc_sequence_init(&seq, 10) == MC_OK);
+    bool done = mc_sequence_update(&seq, MC_FP_C(1));
+    CHECK(done == true);
+    mc_sequence_deinit(&seq);
+    PASS(); return 0;
+}
+
+static int test_single_step() {
+    TEST("single step sequence");
+    mc_sequence_t seq;
+    CHECK(mc_sequence_init(&seq, 10) == MC_OK);
+    CHECK(mc_sequence_push(&seq, (mc_animate_step_t){ MC_FP_C(50), MC_FP_C(0.5f), mc_ease_linear }) == MC_OK);
+    mc_sequence_play(&seq);
+    CHECK(mc_sequence_update(&seq, MC_FP_C(0.6f)) == true);
+    mc_sequence_deinit(&seq);
+    PASS(); return 0;
+}
+
+static int test_clear() {
+    TEST("clear sequence, push again, verify works");
+    mc_sequence_t seq;
+    CHECK(mc_sequence_init(&seq, 10) == MC_OK);
+    CHECK(mc_sequence_push(&seq, (mc_animate_step_t){ MC_FP_C(10), MC_FP_C(0.5f), mc_ease_linear }) == MC_OK);
+    mc_sequence_clear(&seq);
+    CHECK(seq.count == 0);
+    CHECK(mc_sequence_push(&seq, (mc_animate_step_t){ MC_FP_C(20), MC_FP_C(0.5f), mc_ease_linear }) == MC_OK);
+    mc_sequence_play(&seq);
+    bool done = mc_sequence_update(&seq, MC_FP_C(0.6f));
+    CHECK(done == true);
+    mc_sequence_deinit(&seq);
+    PASS(); return 0;
+}
+
+static int test_full_capacity() {
+    TEST("push to capacity, next push returns MC_ERR_FULL");
+    mc_sequence_t seq;
+    CHECK(mc_sequence_init(&seq, 2) == MC_OK);
+    CHECK(mc_sequence_push(&seq, (mc_animate_step_t){ MC_FP_C(10), MC_FP_C(1), mc_ease_linear }) == MC_OK);
+    CHECK(mc_sequence_push(&seq, (mc_animate_step_t){ MC_FP_C(20), MC_FP_C(1), mc_ease_linear }) == MC_OK);
+    CHECK(mc_sequence_push(&seq, (mc_animate_step_t){ MC_FP_C(30), MC_FP_C(1), mc_ease_linear }) == MC_ERR_FULL);
+    mc_sequence_deinit(&seq);
+    PASS(); return 0;
+}
+
 int main() {
     int failed = 0;
     failed += test_seq_3_steps();
+    failed += test_empty_sequence();
+    failed += test_single_step();
+    failed += test_clear();
+    failed += test_full_capacity();
     printf("Sequence: %d/%d passed\n", tests_passed, tests_run);
     return failed;
 }

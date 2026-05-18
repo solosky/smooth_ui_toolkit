@@ -29,9 +29,68 @@ static int test_acquire_release() {
     PASS(); return 0;
 }
 
+static int test_full_pool() {
+    TEST("acquire all, next returns NULL");
+    mc_pool_t pool;
+    CHECK(mc_pool_init(&pool, sizeof(test_obj_t), 3) == MC_OK);
+    int v = 0;
+    CHECK(mc_pool_acquire(&pool, ctor, &v) != NULL);
+    CHECK(mc_pool_acquire(&pool, ctor, &v) != NULL);
+    CHECK(mc_pool_acquire(&pool, ctor, &v) != NULL);
+    CHECK(mc_pool_acquire(&pool, ctor, &v) == NULL);
+    CHECK(mc_pool_available(&pool) == 0);
+    mc_pool_deinit(&pool);
+    PASS(); return 0;
+}
+
+static void foreach_counter(void* obj, void* ctx) { (*(int*)ctx)++; }
+
+static int test_foreach() {
+    TEST("acquire 2, foreach counts 2");
+    mc_pool_t pool;
+    CHECK(mc_pool_init(&pool, sizeof(int), 5) == MC_OK);
+    int count = 0;
+    int v1 = 10, v2 = 20;
+    mc_pool_acquire(&pool, ctor, &v1);
+    mc_pool_acquire(&pool, ctor, &v2);
+    mc_pool_foreach(&pool, foreach_counter, &count);
+    CHECK(count == 2);
+    mc_pool_deinit(&pool);
+    PASS(); return 0;
+}
+
+static int test_null_ctor() {
+    TEST("acquire with NULL constructor");
+    mc_pool_t pool;
+    CHECK(mc_pool_init(&pool, sizeof(int), 3) == MC_OK);
+    void* obj = mc_pool_acquire(&pool, NULL, NULL);
+    CHECK(obj != NULL);
+    mc_pool_deinit(&pool);
+    PASS(); return 0;
+}
+
+static int test_release_all() {
+    TEST("acquire all, release all, acquire again");
+    mc_pool_t pool;
+    CHECK(mc_pool_init(&pool, sizeof(int), 3) == MC_OK);
+    void* objs[3];
+    int v = 0;
+    for (int i = 0; i < 3; i++) objs[i] = mc_pool_acquire(&pool, ctor, &v);
+    CHECK(mc_pool_available(&pool) == 0);
+    for (int i = 0; i < 3; i++) mc_pool_release(&pool, objs[i]);
+    CHECK(mc_pool_available(&pool) == 3);
+    CHECK(mc_pool_acquire(&pool, ctor, &v) != NULL);
+    mc_pool_deinit(&pool);
+    PASS(); return 0;
+}
+
 int main() {
     int failed = 0;
     failed += test_acquire_release();
+    failed += test_full_pool();
+    failed += test_foreach();
+    failed += test_null_ctor();
+    failed += test_release_all();
     printf("Pool: %d/%d passed\n", tests_passed, tests_run);
     return failed;
 }
