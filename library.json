@@ -1,7 +1,7 @@
 {
-  "name": "SmoothUIToolKit",
+  "name": "motionc",
   "version": "2.12.1",
-  "description": "Lightweight animation toolkit for embedded systems (C99)",
+  "description": "Motion animation library for embedded systems (C99)",
   "keywords": "ui, smooth, spring, animation, easing, c99, embedded",
   "repository": {
     "type": "git",

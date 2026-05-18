@@ -1,6 +1,6 @@
 #include <raylib.h>
 #include <string.h>
-#include "sut_easing.h"
+#include "mc_easing.h"
 #include "raylib_helper.h"
 
 #define EASING_COUNT 6
@@ -8,7 +8,7 @@
 
 typedef struct {
     const char* name;
-    sut_easing_fn_t func;
+    mc_easing_fn_t func;
 } easing_entry_t;
 
 typedef struct {
@@ -19,12 +19,12 @@ typedef struct {
 
 static void on_setup(void* ctx) {
     app_t* app = (app_t*)ctx;
-    app->easings[0] = (easing_entry_t){ "ease_quad_out", sut_ease_quad_out };
-    app->easings[1] = (easing_entry_t){ "ease_cubic_in_out", sut_ease_cubic_in_out };
-    app->easings[2] = (easing_entry_t){ "ease_back_out", sut_ease_back_out };
-    app->easings[3] = (easing_entry_t){ "ease_elastic_out", sut_ease_elastic_out };
-    app->easings[4] = (easing_entry_t){ "ease_bounce_out", sut_ease_bounce_out };
-    app->easings[5] = (easing_entry_t){ "ease_circ_in_out", sut_ease_circ_in_out };
+    app->easings[0] = (easing_entry_t){ "ease_quad_out", mc_ease_quad_out };
+    app->easings[1] = (easing_entry_t){ "ease_cubic_in_out", mc_ease_cubic_in_out };
+    app->easings[2] = (easing_entry_t){ "ease_back_out", mc_ease_back_out };
+    app->easings[3] = (easing_entry_t){ "ease_elastic_out", mc_ease_elastic_out };
+    app->easings[4] = (easing_entry_t){ "ease_bounce_out", mc_ease_bounce_out };
+    app->easings[5] = (easing_entry_t){ "ease_circ_in_out", mc_ease_circ_in_out };
     app->selected = 0;
     app->time = 0;
 }
@@ -41,7 +41,7 @@ static void on_draw(void* ctx) {
     app->time += dt;
     if (app->time > 2.0f) app->time = 0;
 
-    sut_easing_fn_t fn = app->easings[app->selected].func;
+    mc_easing_fn_t fn = app->easings[app->selected].func;
 
     // Draw grid
     DrawLine(100, 350, 700, 350, DARKGRAY);
@@ -50,22 +50,22 @@ static void on_draw(void* ctx) {
     // Draw easing curve
     for (int i = 0; i < CURVE_POINTS; i++) {
         float t = (float)i / CURVE_POINTS;
-        sut_real_t st = fn(SUT_REAL_FROM_FLOAT(t));
-        float eased = SUT_REAL_TO_FLOAT(st);
+        mc_real_t st = fn(MC_REAL_FROM_FLOAT(t));
+        float eased = MC_REAL_TO_FLOAT(st);
         int x1 = 100 + (i * 600 / CURVE_POINTS);
         int y1 = 350 - (int)(eased * 300);
         if (i > 0) {
             int x0 = 100 + ((i - 1) * 600 / CURVE_POINTS);
-            sut_real_t st0 = fn(SUT_REAL_FROM_FLOAT((float)(i - 1) / CURVE_POINTS));
-            float eased0 = SUT_REAL_TO_FLOAT(st0);
+            mc_real_t st0 = fn(MC_REAL_FROM_FLOAT((float)(i - 1) / CURVE_POINTS));
+            float eased0 = MC_REAL_TO_FLOAT(st0);
             int y0 = 350 - (int)(eased0 * 300);
             DrawLine(x0, y0, x1, y1, LIME);
         }
     }
 
     // Draw animated ball on curve
-    sut_real_t st = fn(SUT_REAL_FROM_FLOAT(app->time / 2.0f));
-    float eased = SUT_REAL_TO_FLOAT(st);
+    mc_real_t st = fn(MC_REAL_FROM_FLOAT(app->time / 2.0f));
+    float eased = MC_REAL_TO_FLOAT(st);
     int bx = 100 + (int)((app->time / 2.0f) * 600);
     int by = 350 - (int)(eased * 300);
     DrawCircle(bx, by, 8, RED);
@@ -79,6 +79,6 @@ static void on_draw(void* ctx) {
 
 int main(void) {
     app_t app;
-    sut_example_run(800, 450, "Easing Curves - C99", on_setup, on_draw, &app);
+    mc_example_run(800, 450, "Easing Curves - C99", on_setup, on_draw, &app);
     return 0;
 }

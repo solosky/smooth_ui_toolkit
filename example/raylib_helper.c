@@ -1,9 +1,9 @@
 #include "raylib_helper.h"
 #include <stdlib.h>
 
-void sut_example_run(int width, int height, const char* title,
-                     sut_example_setup_fn on_setup,
-                     sut_example_draw_fn on_draw,
+void mc_example_run(int width, int height, const char* title,
+                     mc_example_setup_fn on_setup,
+                     mc_example_draw_fn on_draw,
                      void* ctx)
 {
     InitWindow(width, height, title);
@@ -18,7 +18,7 @@ void sut_example_run(int width, int height, const char* title,
     CloseWindow();
 }
 
-Color sut_example_random_color(void)
+Color mc_example_random_color(void)
 {
     Color c;
     c.r = GetRandomValue(60, 255);

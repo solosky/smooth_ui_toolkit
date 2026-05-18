@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "sut_easing.h"
+#include "mc_easing.h"
 
 static int tests_run = 0;
 static int tests_passed = 0;
@@ -10,25 +10,25 @@ static int tests_passed = 0;
 
 static int test_linear_bounds() {
     TEST("linear bounds");
-    CHECK(sut_ease_linear(SUT_FP_C(0)) == SUT_FP_C(0));
-    CHECK(sut_ease_linear(SUT_FP_C(1)) == SUT_FP_C(1));
-    CHECK(sut_ease_linear(SUT_FP_C(0.5f)) == SUT_FP_C(0.5f));
+    CHECK(mc_ease_linear(MC_FP_C(0)) == MC_FP_C(0));
+    CHECK(mc_ease_linear(MC_FP_C(1)) == MC_FP_C(1));
+    CHECK(mc_ease_linear(MC_FP_C(0.5f)) == MC_FP_C(0.5f));
     PASS(); return 0;
 }
 
 static int test_quad_out_bounds() {
     TEST("quad_out bounds");
-    CHECK(sut_ease_quad_out(SUT_FP_C(0)) == SUT_FP_C(0));
-    CHECK(sut_ease_quad_out(SUT_FP_C(1)) == SUT_FP_C(1));
+    CHECK(mc_ease_quad_out(MC_FP_C(0)) == MC_FP_C(0));
+    CHECK(mc_ease_quad_out(MC_FP_C(1)) == MC_FP_C(1));
     PASS(); return 0;
 }
 
 static int test_lut_bounds() {
     TEST("lut bounds");
-    CHECK(sut_ease_sine_in(SUT_FP_C(0)) == SUT_FP_C(0));
-    CHECK(sut_ease_sine_out(SUT_FP_C(1)) == SUT_FP_C(1));
-    CHECK(sut_ease_bounce_out(SUT_FP_C(0)) == SUT_FP_C(0));
-    CHECK(sut_ease_bounce_out(SUT_FP_C(1)) == SUT_FP_C(1));
+    CHECK(mc_ease_sine_in(MC_FP_C(0)) == MC_FP_C(0));
+    CHECK(mc_ease_sine_out(MC_FP_C(1)) == MC_FP_C(1));
+    CHECK(mc_ease_bounce_out(MC_FP_C(0)) == MC_FP_C(0));
+    CHECK(mc_ease_bounce_out(MC_FP_C(1)) == MC_FP_C(1));
     PASS(); return 0;
 }
 

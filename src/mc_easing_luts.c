@@ -1,7 +1,7 @@
-#ifndef SUT_USE_FLOAT
-#include "sut_easing.h"
+#ifndef MC_USE_FLOAT
+#include "mc_easing.h"
 
-const sut_real_t sut_ease_sine_in_lut[257] = {
+const mc_real_t mc_ease_sine_in_lut[257] = {
     0,
     1,
     5,
@@ -261,7 +261,7 @@ const sut_real_t sut_ease_sine_in_lut[257] = {
     65536,
 };
 
-const sut_real_t sut_ease_sine_out_lut[257] = {
+const mc_real_t mc_ease_sine_out_lut[257] = {
     0,
     402,
     804,
@@ -521,7 +521,7 @@ const sut_real_t sut_ease_sine_out_lut[257] = {
     65536,
 };
 
-const sut_real_t sut_ease_sine_in_out_lut[257] = {
+const mc_real_t mc_ease_sine_in_out_lut[257] = {
     0,
     2,
     10,
@@ -781,7 +781,7 @@ const sut_real_t sut_ease_sine_in_out_lut[257] = {
     65536,
 };
 
-const sut_real_t sut_ease_expo_in_lut[257] = {
+const mc_real_t mc_ease_expo_in_lut[257] = {
     0,
     66,
     68,
@@ -1041,7 +1041,7 @@ const sut_real_t sut_ease_expo_in_lut[257] = {
     65536,
 };
 
-const sut_real_t sut_ease_expo_out_lut[257] = {
+const mc_real_t mc_ease_expo_out_lut[257] = {
     0,
     1751,
     3455,
@@ -1301,7 +1301,7 @@ const sut_real_t sut_ease_expo_out_lut[257] = {
     65536,
 };
 
-const sut_real_t sut_ease_expo_in_out_lut[257] = {
+const mc_real_t mc_ease_expo_in_out_lut[257] = {
     0,
     34,
     36,
@@ -1561,7 +1561,7 @@ const sut_real_t sut_ease_expo_in_out_lut[257] = {
     65536,
 };
 
-const sut_real_t sut_ease_circ_in_lut[257] = {
+const mc_real_t mc_ease_circ_in_lut[257] = {
     0,
     1,
     2,
@@ -1821,7 +1821,7 @@ const sut_real_t sut_ease_circ_in_lut[257] = {
     65536,
 };
 
-const sut_real_t sut_ease_circ_out_lut[257] = {
+const mc_real_t mc_ease_circ_out_lut[257] = {
     0,
     5787,
     8176,
@@ -2081,7 +2081,7 @@ const sut_real_t sut_ease_circ_out_lut[257] = {
     65536,
 };
 
-const sut_real_t sut_ease_circ_in_out_lut[257] = {
+const mc_real_t mc_ease_circ_in_out_lut[257] = {
     0,
     1,
     4,
@@ -2341,7 +2341,7 @@ const sut_real_t sut_ease_circ_in_out_lut[257] = {
     65536,
 };
 
-const sut_real_t sut_ease_back_in_lut[257] = {
+const mc_real_t mc_ease_back_in_lut[257] = {
     0,
     -2,
     -7,
@@ -2601,7 +2601,7 @@ const sut_real_t sut_ease_back_in_lut[257] = {
     65536,
 };
 
-const sut_real_t sut_ease_back_out_lut[257] = {
+const mc_real_t mc_ease_back_out_lut[257] = {
     0,
     1197,
     2382,
@@ -2861,7 +2861,7 @@ const sut_real_t sut_ease_back_out_lut[257] = {
     65536,
 };
 
-const sut_real_t sut_ease_back_in_out_lut[257] = {
+const mc_real_t mc_ease_back_in_out_lut[257] = {
     0,
     -5,
     -20,
@@ -3121,7 +3121,7 @@ const sut_real_t sut_ease_back_in_out_lut[257] = {
     65536,
 };
 
-const sut_real_t sut_ease_elastic_in_lut[257] = {
+const mc_real_t mc_ease_elastic_in_lut[257] = {
     0,
     -28,
     -24,
@@ -3381,7 +3381,7 @@ const sut_real_t sut_ease_elastic_in_lut[257] = {
     65536,
 };
 
-const sut_real_t sut_ease_elastic_out_lut[257] = {
+const mc_real_t mc_ease_elastic_out_lut[257] = {
     0,
     1964,
     4284,
@@ -3641,7 +3641,7 @@ const sut_real_t sut_ease_elastic_out_lut[257] = {
     65536,
 };
 
-const sut_real_t sut_ease_elastic_in_out_lut[257] = {
+const mc_real_t mc_ease_elastic_in_out_lut[257] = {
     0,
     9,
     14,
@@ -3901,7 +3901,7 @@ const sut_real_t sut_ease_elastic_in_out_lut[257] = {
     65536,
 };
 
-const sut_real_t sut_ease_bounce_in_lut[257] = {
+const mc_real_t mc_ease_bounce_in_lut[257] = {
     0,
     168,
     322,
@@ -4161,7 +4161,7 @@ const sut_real_t sut_ease_bounce_in_lut[257] = {
     65536,
 };
 
-const sut_real_t sut_ease_bounce_out_lut[257] = {
+const mc_real_t mc_ease_bounce_out_lut[257] = {
     0,
     8,
     30,
@@ -4421,7 +4421,7 @@ const sut_real_t sut_ease_bounce_out_lut[257] = {
     65536,
 };
 
-const sut_real_t sut_ease_bounce_in_out_lut[257] = {
+const mc_real_t mc_ease_bounce_in_out_lut[257] = {
     0,
     161,
     292,

@@ -10,7 +10,7 @@ add_library(raylib_helper STATIC raylib_helper.c)
 
 function(add_c99_example name source)
     add_executable(${name} ${source})
-    target_link_libraries(${name} raylib_helper sut raylib m)
+    target_link_libraries(${name} raylib_helper mc raylib m)
 endfunction()
 
 add_c99_example(c99_animate            animate.c)

@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "sut_spring.h"
+#include "mc_spring.h"
 
 static int tests_run = 0, tests_passed = 0;
 #define TEST(name) do { tests_run++; printf("  %s ... ", name); } while(0)
@@ -8,16 +8,16 @@ static int tests_run = 0, tests_passed = 0;
 
 static int test_spring_converges() {
     TEST("spring converges to target");
-    sut_real_t x = SUT_FP_C(0);
-    sut_spring_state_t s = { 0 };
-    sut_spring_params_t p = { SUT_FP_C(100), SUT_FP_C(10), SUT_FP_C(1) };
-    sut_real_t target = SUT_FP_C(10);
-    sut_real_t dt = SUT_FP_C(1.0f / 60.0f);
+    mc_real_t x = MC_FP_C(0);
+    mc_spring_state_t s = { 0 };
+    mc_spring_params_t p = { MC_FP_C(100), MC_FP_C(10), MC_FP_C(1) };
+    mc_real_t target = MC_FP_C(10);
+    mc_real_t dt = MC_FP_C(1.0f / 60.0f);
     for (int i = 0; i < 1000; i++)
-        sut_spring_step(&x, &s, &p, target, dt);
-    sut_real_t error = x - target;
+        mc_spring_step(&x, &s, &p, target, dt);
+    mc_real_t error = x - target;
     if (error < 0) error = -error;
-    CHECK(error < SUT_FP_C(0.01f));
+    CHECK(error < MC_FP_C(0.01f));
     PASS(); return 0;
 }
 

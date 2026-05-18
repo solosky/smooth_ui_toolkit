@@ -1,29 +1,29 @@
-#include "sut_animate.h"
-#include "sut_math.h"
+#include "mc_animate.h"
+#include "mc_math.h"
 #include <string.h>
 
-void sut_animate_init_easing(sut_animate_t* a, sut_real_t from, sut_real_t to, sut_real_t duration) {
+void mc_animate_init_easing(mc_animate_t* a, mc_real_t from, mc_real_t to, mc_real_t duration) {
     memset(a, 0, sizeof(*a));
-    a->mode = SUT_ANIMATE_EASING;
+    a->mode = MC_ANIMATE_EASING;
     a->from = from;
     a->to = to;
     a->current = from;
     a->config.easing.duration = duration;
-    a->config.easing.easing = sut_ease_linear;
+    a->config.easing.easing = mc_ease_linear;
 }
 
-void sut_animate_init_spring(sut_animate_t* a, sut_real_t from, sut_real_t to) {
+void mc_animate_init_spring(mc_animate_t* a, mc_real_t from, mc_real_t to) {
     memset(a, 0, sizeof(*a));
-    a->mode = SUT_ANIMATE_SPRING;
+    a->mode = MC_ANIMATE_SPRING;
     a->from = from;
     a->to = to;
     a->current = from;
-    a->config.spring.stiffness = SUT_FP_C(100);
-    a->config.spring.damping = SUT_FP_C(10);
-    a->config.spring.mass = SUT_FP_C(1);
+    a->config.spring.stiffness = MC_FP_C(100);
+    a->config.spring.damping = MC_FP_C(10);
+    a->config.spring.mass = MC_FP_C(1);
 }
 
-bool sut_animate_update(sut_animate_t* a, sut_real_t dt) {
+bool mc_animate_update(mc_animate_t* a, mc_real_t dt) {
     if (a->delay > 0) {
         a->delay -= dt;
         if (a->delay > 0) return false;
@@ -31,15 +31,15 @@ bool sut_animate_update(sut_animate_t* a, sut_real_t dt) {
         a->delay = 0;
     }
 
-    if (a->mode == SUT_ANIMATE_SPRING) {
-        sut_spring_step(&a->current, (sut_spring_state_t*)&a->velocity, &a->config.spring, a->to, dt);
+    if (a->mode == MC_ANIMATE_SPRING) {
+        mc_spring_step(&a->current, (mc_spring_state_t*)&a->velocity, &a->config.spring, a->to, dt);
         if (a->on_update) a->on_update(a->ctx, a->current);
         return false;
     }
 
     a->elapsed += dt;
-    sut_real_t t = sut_fp_div(a->elapsed, a->config.easing.duration);
-    if (t >= SUT_FP_C(1)) {
+    mc_real_t t = mc_fp_div(a->elapsed, a->config.easing.duration);
+    if (t >= MC_FP_C(1)) {
         a->current = a->to;
         if (a->on_update) a->on_update(a->ctx, a->current);
         if (a->repeat > 0) {
@@ -56,13 +56,13 @@ bool sut_animate_update(sut_animate_t* a, sut_real_t dt) {
         if (a->on_complete) a->on_complete(a->ctx);
         return true;
     }
-    sut_real_t eased = a->config.easing.easing(t);
-    a->current = sut_lerp(a->from, a->to, eased);
+    mc_real_t eased = a->config.easing.easing(t);
+    a->current = mc_lerp(a->from, a->to, eased);
     if (a->on_update) a->on_update(a->ctx, a->current);
     return false;
 }
 
-void sut_animate_reset(sut_animate_t* a) {
+void mc_animate_reset(mc_animate_t* a) {
     a->elapsed = 0;
     a->delay = 0;
     a->velocity = 0;
@@ -74,28 +74,28 @@ void sut_animate_reset(sut_animate_t* a) {
 // vec2 animate
 // ---------------------------------------------------------------------------
 
-void sut_vec2_animate_init_easing(sut_vec2_animate_t* a, sut_vec2_t from, sut_vec2_t to, sut_real_t duration) {
+void mc_vec2_animate_init_easing(mc_vec2_animate_t* a, mc_vec2_t from, mc_vec2_t to, mc_real_t duration) {
     memset(a, 0, sizeof(*a));
-    a->mode = SUT_ANIMATE_EASING;
+    a->mode = MC_ANIMATE_EASING;
     a->from = from;
     a->to = to;
     a->current = from;
     a->config.easing.duration = duration;
-    a->config.easing.easing = sut_ease_linear;
+    a->config.easing.easing = mc_ease_linear;
 }
 
-void sut_vec2_animate_init_spring(sut_vec2_animate_t* a, sut_vec2_t from, sut_vec2_t to) {
+void mc_vec2_animate_init_spring(mc_vec2_animate_t* a, mc_vec2_t from, mc_vec2_t to) {
     memset(a, 0, sizeof(*a));
-    a->mode = SUT_ANIMATE_SPRING;
+    a->mode = MC_ANIMATE_SPRING;
     a->from = from;
     a->to = to;
     a->current = from;
-    a->config.spring.stiffness = SUT_FP_C(100);
-    a->config.spring.damping = SUT_FP_C(10);
-    a->config.spring.mass = SUT_FP_C(1);
+    a->config.spring.stiffness = MC_FP_C(100);
+    a->config.spring.damping = MC_FP_C(10);
+    a->config.spring.mass = MC_FP_C(1);
 }
 
-void sut_vec2_animate_move_to(sut_vec2_animate_t* a, sut_vec2_t target) {
+void mc_vec2_animate_move_to(mc_vec2_animate_t* a, mc_vec2_t target) {
     a->from = a->current;
     a->to = target;
     a->elapsed = 0;
@@ -103,7 +103,7 @@ void sut_vec2_animate_move_to(sut_vec2_animate_t* a, sut_vec2_t target) {
     a->velocity.y = 0;
 }
 
-bool sut_vec2_animate_update(sut_vec2_animate_t* a, sut_real_t dt) {
+bool mc_vec2_animate_update(mc_vec2_animate_t* a, mc_real_t dt) {
     if (a->delay > 0) {
         a->delay -= dt;
         if (a->delay > 0) return false;
@@ -111,23 +111,23 @@ bool sut_vec2_animate_update(sut_vec2_animate_t* a, sut_real_t dt) {
         a->delay = 0;
     }
 
-    if (a->mode == SUT_ANIMATE_SPRING) {
-        sut_spring_step(&a->current.x, (sut_spring_state_t*)&a->velocity.x, &a->config.spring, a->to.x, dt);
-        sut_spring_step(&a->current.y, (sut_spring_state_t*)&a->velocity.y, &a->config.spring, a->to.y, dt);
+    if (a->mode == MC_ANIMATE_SPRING) {
+        mc_spring_step(&a->current.x, (mc_spring_state_t*)&a->velocity.x, &a->config.spring, a->to.x, dt);
+        mc_spring_step(&a->current.y, (mc_spring_state_t*)&a->velocity.y, &a->config.spring, a->to.y, dt);
         if (a->on_update) a->on_update(a->ctx, a->current);
         return false;
     }
 
     a->elapsed += dt;
-    sut_real_t t = sut_fp_div(a->elapsed, a->config.easing.duration);
-    if (t >= SUT_FP_C(1)) {
+    mc_real_t t = mc_fp_div(a->elapsed, a->config.easing.duration);
+    if (t >= MC_FP_C(1)) {
         a->current = a->to;
         if (a->on_update) a->on_update(a->ctx, a->current);
         if (a->on_complete) a->on_complete(a->ctx);
         return true;
     }
-    sut_real_t eased = a->config.easing.easing(t);
-    a->current = sut_vec2_lerp(a->from, a->to, eased);
+    mc_real_t eased = a->config.easing.easing(t);
+    a->current = mc_vec2_lerp(a->from, a->to, eased);
     if (a->on_update) a->on_update(a->ctx, a->current);
     return false;
 }
@@ -136,28 +136,28 @@ bool sut_vec2_animate_update(sut_vec2_animate_t* a, sut_real_t dt) {
 // vec4 animate
 // ---------------------------------------------------------------------------
 
-void sut_vec4_animate_init_easing(sut_vec4_animate_t* a, sut_vec4_t from, sut_vec4_t to, sut_real_t duration) {
+void mc_vec4_animate_init_easing(mc_vec4_animate_t* a, mc_vec4_t from, mc_vec4_t to, mc_real_t duration) {
     memset(a, 0, sizeof(*a));
-    a->mode = SUT_ANIMATE_EASING;
+    a->mode = MC_ANIMATE_EASING;
     a->from = from;
     a->to = to;
     a->current = from;
     a->config.easing.duration = duration;
-    a->config.easing.easing = sut_ease_linear;
+    a->config.easing.easing = mc_ease_linear;
 }
 
-void sut_vec4_animate_init_spring(sut_vec4_animate_t* a, sut_vec4_t from, sut_vec4_t to) {
+void mc_vec4_animate_init_spring(mc_vec4_animate_t* a, mc_vec4_t from, mc_vec4_t to) {
     memset(a, 0, sizeof(*a));
-    a->mode = SUT_ANIMATE_SPRING;
+    a->mode = MC_ANIMATE_SPRING;
     a->from = from;
     a->to = to;
     a->current = from;
-    a->config.spring.stiffness = SUT_FP_C(100);
-    a->config.spring.damping = SUT_FP_C(10);
-    a->config.spring.mass = SUT_FP_C(1);
+    a->config.spring.stiffness = MC_FP_C(100);
+    a->config.spring.damping = MC_FP_C(10);
+    a->config.spring.mass = MC_FP_C(1);
 }
 
-void sut_vec4_animate_move_to(sut_vec4_animate_t* a, sut_vec4_t target) {
+void mc_vec4_animate_move_to(mc_vec4_animate_t* a, mc_vec4_t target) {
     a->from = a->current;
     a->to = target;
     a->elapsed = 0;
@@ -167,7 +167,7 @@ void sut_vec4_animate_move_to(sut_vec4_animate_t* a, sut_vec4_t target) {
     a->velocity.w = 0;
 }
 
-bool sut_vec4_animate_update(sut_vec4_animate_t* a, sut_real_t dt) {
+bool mc_vec4_animate_update(mc_vec4_animate_t* a, mc_real_t dt) {
     if (a->delay > 0) {
         a->delay -= dt;
         if (a->delay > 0) return false;
@@ -175,25 +175,25 @@ bool sut_vec4_animate_update(sut_vec4_animate_t* a, sut_real_t dt) {
         a->delay = 0;
     }
 
-    if (a->mode == SUT_ANIMATE_SPRING) {
-        sut_spring_step(&a->current.x, (sut_spring_state_t*)&a->velocity.x, &a->config.spring, a->to.x, dt);
-        sut_spring_step(&a->current.y, (sut_spring_state_t*)&a->velocity.y, &a->config.spring, a->to.y, dt);
-        sut_spring_step(&a->current.z, (sut_spring_state_t*)&a->velocity.z, &a->config.spring, a->to.z, dt);
-        sut_spring_step(&a->current.w, (sut_spring_state_t*)&a->velocity.w, &a->config.spring, a->to.w, dt);
+    if (a->mode == MC_ANIMATE_SPRING) {
+        mc_spring_step(&a->current.x, (mc_spring_state_t*)&a->velocity.x, &a->config.spring, a->to.x, dt);
+        mc_spring_step(&a->current.y, (mc_spring_state_t*)&a->velocity.y, &a->config.spring, a->to.y, dt);
+        mc_spring_step(&a->current.z, (mc_spring_state_t*)&a->velocity.z, &a->config.spring, a->to.z, dt);
+        mc_spring_step(&a->current.w, (mc_spring_state_t*)&a->velocity.w, &a->config.spring, a->to.w, dt);
         if (a->on_update) a->on_update(a->ctx, a->current);
         return false;
     }
 
     a->elapsed += dt;
-    sut_real_t t = sut_fp_div(a->elapsed, a->config.easing.duration);
-    if (t >= SUT_FP_C(1)) {
+    mc_real_t t = mc_fp_div(a->elapsed, a->config.easing.duration);
+    if (t >= MC_FP_C(1)) {
         a->current = a->to;
         if (a->on_update) a->on_update(a->ctx, a->current);
         if (a->on_complete) a->on_complete(a->ctx);
         return true;
     }
-    sut_real_t eased = a->config.easing.easing(t);
-    a->current = sut_vec4_lerp(a->from, a->to, eased);
+    mc_real_t eased = a->config.easing.easing(t);
+    a->current = mc_vec4_lerp(a->from, a->to, eased);
     if (a->on_update) a->on_update(a->ctx, a->current);
     return false;
 }

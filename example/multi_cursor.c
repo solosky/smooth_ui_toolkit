@@ -1,13 +1,13 @@
 #include <raylib.h>
 #include <math.h>
-#include "sut_animate.h"
+#include "mc_animate.h"
 #include "raylib_helper.h"
 
 #define CURSOR_COUNT 6
 
 typedef struct {
-    sut_animate_t x;
-    sut_animate_t y;
+    mc_animate_t x;
+    mc_animate_t y;
 } cursor_t;
 
 typedef struct {
@@ -24,10 +24,10 @@ static void on_setup(void* ctx) {
     };
 
     for (int i = 0; i < CURSOR_COUNT; i++) {
-        sut_animate_init_spring(&app->cursors[i].x, SUT_FP_C(400), SUT_FP_C(400));
-        sut_animate_init_spring(&app->cursors[i].y, SUT_FP_C(225), SUT_FP_C(225));
-        app->cursors[i].x.config.spring.stiffness = SUT_FP_C(55 + i * 25);
-        app->cursors[i].x.config.spring.damping = SUT_FP_C(13 - i);
+        mc_animate_init_spring(&app->cursors[i].x, MC_FP_C(400), MC_FP_C(400));
+        mc_animate_init_spring(&app->cursors[i].y, MC_FP_C(225), MC_FP_C(225));
+        app->cursors[i].x.config.spring.stiffness = MC_FP_C(55 + i * 25);
+        app->cursors[i].x.config.spring.damping = MC_FP_C(13 - i);
         app->cursors[i].y.config.spring = app->cursors[i].x.config.spring;
         app->colors[i].r = (colors_raw[i] >> 24) & 0xFF;
         app->colors[i].g = (colors_raw[i] >> 16) & 0xFF;
@@ -44,8 +44,8 @@ static void update_cursors(app_t* app, int mx, int my) {
         float angle = angle_step * i;
         int dx = (int)(radius * cosf(angle));
         int dy = (int)(radius * sinf(angle));
-        app->cursors[i].x.to = SUT_REAL_FROM_INT(mx + dx);
-        app->cursors[i].y.to = SUT_REAL_FROM_INT(my + dy);
+        app->cursors[i].x.to = MC_REAL_FROM_INT(mx + dx);
+        app->cursors[i].y.to = MC_REAL_FROM_INT(my + dy);
     }
 }
 
@@ -62,20 +62,20 @@ static void on_draw(void* ctx) {
         update_cursors(app, 400, 225);
 
     for (int i = 0; i < CURSOR_COUNT; i++) {
-        sut_animate_update(&app->cursors[i].x, SUT_REAL_FROM_FLOAT(dt));
-        sut_animate_update(&app->cursors[i].y, SUT_REAL_FROM_FLOAT(dt));
+        mc_animate_update(&app->cursors[i].x, MC_REAL_FROM_FLOAT(dt));
+        mc_animate_update(&app->cursors[i].y, MC_REAL_FROM_FLOAT(dt));
     }
 
     DrawCircle(mx, my, 8, WHITE);
     for (int i = 0; i < CURSOR_COUNT; i++) {
-        int cx = SUT_REAL_TO_INT(app->cursors[i].x.current);
-        int cy = SUT_REAL_TO_INT(app->cursors[i].y.current);
+        int cx = MC_REAL_TO_INT(app->cursors[i].x.current);
+        int cy = MC_REAL_TO_INT(app->cursors[i].y.current);
         DrawCircle(cx, cy, 8, app->colors[i]);
     }
 }
 
 int main(void) {
     app_t app;
-    sut_example_run(800, 450, "Multi Cursor - C99", on_setup, on_draw, &app);
+    mc_example_run(800, 450, "Multi Cursor - C99", on_setup, on_draw, &app);
     return 0;
 }

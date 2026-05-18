@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "sut_animate.h"
+#include "mc_animate.h"
 
 static int tests_run = 0, tests_passed = 0;
 #define TEST(n) do { tests_run++; printf("  %s ... ", n); } while(0)
@@ -8,32 +8,32 @@ static int tests_run = 0, tests_passed = 0;
 
 static int test_easing_anim_completes() {
     TEST("easing anim from 0 to 10 over 1s");
-    sut_animate_t a;
-    sut_animate_init_easing(&a, SUT_FP_C(0), SUT_FP_C(10), SUT_FP_C(1));
-    bool done = sut_animate_update(&a, SUT_FP_C(1));
+    mc_animate_t a;
+    mc_animate_init_easing(&a, MC_FP_C(0), MC_FP_C(10), MC_FP_C(1));
+    bool done = mc_animate_update(&a, MC_FP_C(1));
     CHECK(done == true);
-    CHECK(SUT_REAL_TO_INT(a.current) == 10);
+    CHECK(MC_REAL_TO_INT(a.current) == 10);
     PASS(); return 0;
 }
 
 static int test_easing_anim_partial() {
     TEST("easing anim at t=0.5 linear");
-    sut_animate_t a;
-    sut_animate_init_easing(&a, SUT_FP_C(0), SUT_FP_C(10), SUT_FP_C(1));
-    a.config.easing.easing = sut_ease_linear;
-    bool done = sut_animate_update(&a, SUT_FP_C(0.5f));
+    mc_animate_t a;
+    mc_animate_init_easing(&a, MC_FP_C(0), MC_FP_C(10), MC_FP_C(1));
+    a.config.easing.easing = mc_ease_linear;
+    bool done = mc_animate_update(&a, MC_FP_C(0.5f));
     CHECK(done == false);
-    CHECK(SUT_REAL_TO_INT(a.current) == 5);
+    CHECK(MC_REAL_TO_INT(a.current) == 5);
     PASS(); return 0;
 }
 
 static int test_spring_anim() {
     TEST("spring anim from 0 to 10");
-    sut_animate_t a;
-    sut_animate_init_spring(&a, SUT_FP_C(0), SUT_FP_C(10));
-    sut_animate_update(&a, SUT_FP_C(1.0f / 60.0f));
+    mc_animate_t a;
+    mc_animate_init_spring(&a, MC_FP_C(0), MC_FP_C(10));
+    mc_animate_update(&a, MC_FP_C(1.0f / 60.0f));
     CHECK(a.current > 0);
-    CHECK(a.current < SUT_FP_C(10));
+    CHECK(a.current < MC_FP_C(10));
     PASS(); return 0;
 }
 

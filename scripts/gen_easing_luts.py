@@ -7,7 +7,7 @@ def to_fp(v):
 
 
 def gen_lut(name, func, n=257):
-    print(f"const sut_real_t sut_ease_{name}_lut[{n}] = {{")
+    print(f"const mc_real_t mc_ease_{name}_lut[{n}] = {{")
     for i in range(n):
         t = i / (n - 1)
         v = func(t)
@@ -115,8 +115,8 @@ def bounce_in_out(t):
     return (1 + bounce_out(2 * t - 1)) / 2
 
 
-print('#ifndef SUT_USE_FLOAT')
-print('#include "sut_easing.h"')
+print('#ifndef MC_USE_FLOAT')
+print('#include "mc_easing.h"')
 print()
 
 gen_lut("sine_in", sine_in)

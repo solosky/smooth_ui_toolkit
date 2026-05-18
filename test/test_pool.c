@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "sut_pool.h"
+#include "mc_pool.h"
 
 static int tests_run = 0, tests_passed = 0;
 #define TEST(n) do { tests_run++; printf("  %s ... ", n); } while(0)
@@ -11,21 +11,21 @@ static void ctor(void* obj, void* ctx) { ((test_obj_t*)obj)->value = *(int*)ctx;
 
 static int test_acquire_release() {
     TEST("acquire 2, release 1, acquire again");
-    sut_pool_t pool;
-    CHECK(sut_pool_init(&pool, sizeof(test_obj_t), 5) == SUT_OK);
+    mc_pool_t pool;
+    CHECK(mc_pool_init(&pool, sizeof(test_obj_t), 5) == MC_OK);
     int v42 = 42, v99 = 99;
-    test_obj_t* a = (test_obj_t*)sut_pool_acquire(&pool, ctor, &v42);
-    test_obj_t* b = (test_obj_t*)sut_pool_acquire(&pool, ctor, &v99);
+    test_obj_t* a = (test_obj_t*)mc_pool_acquire(&pool, ctor, &v42);
+    test_obj_t* b = (test_obj_t*)mc_pool_acquire(&pool, ctor, &v99);
     CHECK(a != NULL && b != NULL);
     CHECK(a->value == 42);
     CHECK(b->value == 99);
-    CHECK(sut_pool_available(&pool) == 3);
-    sut_pool_release(&pool, a);
-    CHECK(sut_pool_available(&pool) == 4);
+    CHECK(mc_pool_available(&pool) == 3);
+    mc_pool_release(&pool, a);
+    CHECK(mc_pool_available(&pool) == 4);
     int v7 = 7;
-    test_obj_t* c = (test_obj_t*)sut_pool_acquire(&pool, ctor, &v7);
+    test_obj_t* c = (test_obj_t*)mc_pool_acquire(&pool, ctor, &v7);
     CHECK(c != NULL && c->value == 7);
-    sut_pool_deinit(&pool);
+    mc_pool_deinit(&pool);
     PASS(); return 0;
 }
 
