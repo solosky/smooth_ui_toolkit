@@ -1,8 +1,8 @@
 {
   "name": "SmoothUIToolKit",
   "version": "2.12.1",
-  "description": "UI 动画工具集",
-  "keywords": "ui, smooth, spring animation",
+  "description": "Lightweight animation toolkit for embedded systems (C99)",
+  "keywords": "ui, smooth, spring, animation, easing, c99, embedded",
   "repository": {
     "type": "git",
     "url": "https://github.com/Forairaaaaa/smooth_ui_toolkit.git"
@@ -21,10 +21,9 @@
   "platforms": "*",
   "build": {
     "srcDir": ".",
-    "includeDir": "./src",
+    "includeDir": "./include",
     "flags": [
-      "-std=c++17",
-      "-I src/lvgl"
+      "-std=c99"
     ]
   }
 }
