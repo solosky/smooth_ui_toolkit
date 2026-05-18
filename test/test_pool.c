@@ -8,6 +8,7 @@ static int tests_run = 0, tests_passed = 0;
 
 typedef struct { int value; } test_obj_t;
 static void ctor(void* obj, void* ctx) { ((test_obj_t*)obj)->value = *(int*)ctx; }
+static void foreach_counter(void* obj, void* ctx) { (*(int*)ctx)++; }
 
 static int test_acquire_release() {
     TEST("acquire 2, release 1, acquire again");
@@ -30,7 +31,7 @@ static int test_acquire_release() {
 }
 
 static int test_full_pool() {
-    TEST("acquire all, next returns NULL");
+    TEST("acquire all slots, next returns NULL");
     mc_pool_t pool;
     CHECK(mc_pool_init(&pool, sizeof(test_obj_t), 3) == MC_OK);
     int v = 0;
@@ -42,8 +43,6 @@ static int test_full_pool() {
     mc_pool_deinit(&pool);
     PASS(); return 0;
 }
-
-static void foreach_counter(void* obj, void* ctx) { (*(int*)ctx)++; }
 
 static int test_foreach() {
     TEST("acquire 2, foreach counts 2");
@@ -60,7 +59,7 @@ static int test_foreach() {
 }
 
 static int test_null_ctor() {
-    TEST("acquire with NULL constructor");
+    TEST("acquire with NULL constructor returns valid object");
     mc_pool_t pool;
     CHECK(mc_pool_init(&pool, sizeof(int), 3) == MC_OK);
     void* obj = mc_pool_acquire(&pool, NULL, NULL);
@@ -84,6 +83,43 @@ static int test_release_all() {
     PASS(); return 0;
 }
 
+static int test_zero_capacity() {
+    TEST("zero capacity init returns MC_OK, acquire returns NULL");
+    mc_pool_t pool;
+    CHECK(mc_pool_init(&pool, sizeof(int), 0) == MC_OK);
+    void* obj = mc_pool_acquire(&pool, NULL, NULL);
+    CHECK(obj == NULL);
+    mc_pool_deinit(&pool);
+    PASS(); return 0;
+}
+
+static int test_lifo_order() {
+    TEST("LIFO order: most recently released is reused first");
+    mc_pool_t pool;
+    CHECK(mc_pool_init(&pool, sizeof(int), 3) == MC_OK);
+    int v = 0;
+    void* a = mc_pool_acquire(&pool, NULL, NULL);
+    void* b = mc_pool_acquire(&pool, NULL, NULL);
+    mc_pool_release(&pool, b);
+    mc_pool_release(&pool, a);
+    void* c = mc_pool_acquire(&pool, NULL, NULL);
+    CHECK(c == a);
+    PASS(); return 0;
+}
+
+static int test_release_invalid() {
+    TEST("release pointer not from pool does nothing (no crash)");
+    mc_pool_t pool;
+    CHECK(mc_pool_init(&pool, sizeof(int), 3) == MC_OK);
+    int stack_var = 42;
+    mc_pool_release(&pool, &stack_var);
+    int v = 0;
+    void* obj = mc_pool_acquire(&pool, NULL, NULL);
+    CHECK(obj != NULL);
+    mc_pool_deinit(&pool);
+    PASS(); return 0;
+}
+
 int main() {
     int failed = 0;
     failed += test_acquire_release();
@@ -91,6 +127,9 @@ int main() {
     failed += test_foreach();
     failed += test_null_ctor();
     failed += test_release_all();
+    failed += test_zero_capacity();
+    failed += test_lifo_order();
+    failed += test_release_invalid();
     printf("Pool: %d/%d passed\n", tests_passed, tests_run);
     return failed;
 }

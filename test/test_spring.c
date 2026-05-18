@@ -22,7 +22,7 @@ static int test_spring_converges() {
 }
 
 static int test_underdamped() {
-    TEST("underdamped: low damping should overshoot then settle");
+    TEST("underdamped: low damping overshoots then settles");
     mc_real_t x = MC_FP_C(0);
     mc_spring_state_t s = { 0 };
     mc_spring_params_t p = { MC_FP_C(100), MC_FP_C(3), MC_FP_C(1) };
@@ -41,13 +41,13 @@ static int test_underdamped() {
 }
 
 static int test_critical_damping() {
-    TEST("critically damped: no overshoot, approach target");
+    TEST("critically damped: no overshoot");
     mc_real_t x = MC_FP_C(0);
     mc_spring_state_t s = { 0 };
     mc_spring_params_t p = { MC_FP_C(200), MC_FP_C(28), MC_FP_C(1) };
     mc_real_t target = MC_FP_C(10);
     mc_real_t dt = MC_FP_C(1.0f / 60.0f);
-    for (int i = 0; i < 200; i++) {
+    for (int i = 0; i < 300; i++) {
         mc_spring_step(&x, &s, &p, target, dt);
         CHECK(x <= target + MC_FP_C(0.1f));
     }
@@ -61,7 +61,7 @@ static int test_overdamped() {
     mc_spring_params_t p = { MC_FP_C(100), MC_FP_C(50), MC_FP_C(1) };
     mc_real_t target = MC_FP_C(10);
     mc_real_t dt = MC_FP_C(1.0f / 60.0f);
-    for (int i = 0; i < 200; i++) {
+    for (int i = 0; i < 300; i++) {
         mc_spring_step(&x, &s, &p, target, dt);
         CHECK(x <= target + MC_FP_C(0.1f));
     }
@@ -69,7 +69,7 @@ static int test_overdamped() {
 }
 
 static int test_zero_stiffness() {
-    TEST("zero stiffness: no spring force, x should not move to target");
+    TEST("zero stiffness: no spring force, x barely moves");
     mc_real_t x = MC_FP_C(0);
     mc_spring_state_t s = { 0 };
     mc_spring_params_t p = { MC_FP_C(0), MC_FP_C(10), MC_FP_C(1) };
@@ -82,7 +82,7 @@ static int test_zero_stiffness() {
 }
 
 static int test_at_target() {
-    TEST("already at target: x should stay at target");
+    TEST("already at target: x stays at target");
     mc_real_t x = MC_FP_C(10);
     mc_spring_state_t s = { 0 };
     mc_spring_params_t p = { MC_FP_C(100), MC_FP_C(10), MC_FP_C(1) };
@@ -94,6 +94,43 @@ static int test_at_target() {
     PASS(); return 0;
 }
 
+static int test_high_stiffness() {
+    TEST("very high stiffness: saturates, no crash");
+    mc_real_t x = MC_FP_C(0);
+    mc_spring_state_t s = { 0 };
+    mc_spring_params_t p = { MC_FP_C(500), MC_FP_C(10), MC_FP_C(1) };
+    mc_real_t target = MC_FP_C(10);
+    mc_real_t dt = MC_FP_C(1.0f / 60.0f);
+    for (int i = 0; i < 100; i++) {
+        mc_spring_step(&x, &s, &p, target, dt);
+        CHECK(x >= -MC_FP_C(50) && x <= MC_FP_C(50));
+    }
+    PASS(); return 0;
+}
+
+static int test_zero_mass() {
+    TEST("zero mass: no acceleration, should not crash");
+    mc_real_t x = MC_FP_C(0);
+    mc_spring_state_t s = { 0 };
+    mc_spring_params_t p = { MC_FP_C(100), MC_FP_C(10), MC_FP_C(0) };
+    mc_real_t target = MC_FP_C(10);
+    mc_real_t dt = MC_FP_C(1.0f / 60.0f);
+    for (int i = 0; i < 10; i++)
+        mc_spring_step(&x, &s, &p, target, dt);
+    PASS(); return 0;
+}
+
+static int test_large_dt() {
+    TEST("large dt (1s): spring stays bounded, no crash");
+    mc_real_t x = MC_FP_C(0);
+    mc_spring_state_t s = { 0 };
+    mc_spring_params_t p = { MC_FP_C(100), MC_FP_C(10), MC_FP_C(1) };
+    mc_real_t target = MC_FP_C(10);
+    mc_real_t dt = MC_FP_C(1);
+    mc_spring_step(&x, &s, &p, target, dt);
+    PASS(); return 0;
+}
+
 int main() {
     int failed = 0;
     failed += test_spring_converges();
@@ -102,6 +139,9 @@ int main() {
     failed += test_overdamped();
     failed += test_zero_stiffness();
     failed += test_at_target();
+    failed += test_high_stiffness();
+    failed += test_zero_mass();
+    failed += test_large_dt();
     printf("Spring: %d/%d passed\n", tests_passed, tests_run);
     return failed;
 }

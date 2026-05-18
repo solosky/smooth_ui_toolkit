@@ -1,8 +1,8 @@
 #include <stdio.h>
+#include <stdint.h>
 #include "mc_math.h"
 
 static int tests_run = 0, tests_passed = 0;
-
 #define TEST(name) do { tests_run++; printf("  TEST: %s ... ", name); } while(0)
 #define PASS()     do { tests_passed++; printf("PASS\n"); } while(0)
 #define CHECK(c)   do { if (!(c)) { printf("FAIL at %d\n", __LINE__); return 1; } } while(0)
@@ -15,6 +15,13 @@ static int test_clamp() {
     PASS(); return 0;
 }
 
+static int test_clamp_equal_min_max() {
+    TEST("clamp with min==max returns that value");
+    CHECK(MC_REAL_TO_INT(mc_clamp(MC_FP_C(5), MC_FP_C(7), MC_FP_C(7))) == 7);
+    CHECK(MC_REAL_TO_INT(mc_clamp(MC_FP_C(9), MC_FP_C(7), MC_FP_C(7))) == 7);
+    PASS(); return 0;
+}
+
 static int test_lerp() {
     TEST("lerp 0->10 at t=0, 0.5, 1");
     CHECK(MC_REAL_TO_INT(mc_lerp(MC_FP_C(0), MC_FP_C(10), MC_FP_C(0))) == 0);
@@ -23,9 +30,36 @@ static int test_lerp() {
     PASS(); return 0;
 }
 
+static int test_lerp_negative_range() {
+    TEST("lerp negative: -10->10 at t=0.5 = 0");
+    CHECK(MC_REAL_TO_INT(mc_lerp(MC_FP_C(-10), MC_FP_C(10), MC_FP_C(0.5f))) == 0);
+    PASS(); return 0;
+}
+
+static int test_lerp_t_out_of_range() {
+    TEST("lerp t>1 extrapolates, t<0 extrapolates");
+    CHECK(MC_REAL_TO_INT(mc_lerp(MC_FP_C(0), MC_FP_C(10), MC_FP_C(2))) == 20);
+    CHECK(MC_REAL_TO_INT(mc_lerp(MC_FP_C(0), MC_FP_C(10), MC_FP_C(-1))) == -10);
+    PASS(); return 0;
+}
+
 static int test_map() {
     TEST("map 0-10 -> 100-200 at 5");
     mc_real_t r = mc_map(MC_FP_C(5), MC_FP_C(0), MC_FP_C(10), MC_FP_C(100), MC_FP_C(200));
+    CHECK(MC_REAL_TO_INT(r) == 150);
+    PASS(); return 0;
+}
+
+static int test_map_out_of_range() {
+    TEST("map input outside range still maps linearly");
+    mc_real_t r = mc_map(MC_FP_C(20), MC_FP_C(0), MC_FP_C(10), MC_FP_C(0), MC_FP_C(100));
+    CHECK(MC_REAL_TO_INT(r) == 200);
+    PASS(); return 0;
+}
+
+static int test_map_inverted_range() {
+    TEST("map with inverted output range (200->100)");
+    mc_real_t r = mc_map(MC_FP_C(5), MC_FP_C(0), MC_FP_C(10), MC_FP_C(200), MC_FP_C(100));
     CHECK(MC_REAL_TO_INT(r) == 150);
     PASS(); return 0;
 }
@@ -50,6 +84,21 @@ static int test_fp_mul_zero() {
     PASS(); return 0;
 }
 
+static int test_fp_mul_saturation() {
+    TEST("fp_mul large values saturate to INT32_MAX");
+    mc_real_t r = mc_fp_mul(MC_FP_C(500), MC_FP_C(500));
+    CHECK(r == INT32_MAX);
+    PASS(); return 0;
+}
+
+static int test_fp_mul_fractional() {
+    TEST("fp_mul 0.5 * 0.5 = 0.25");
+    mc_real_t r = mc_fp_mul(MC_FP_C(0.5f), MC_FP_C(0.5f));
+    CHECK(MC_REAL_TO_INT(r) == 0);
+    CHECK(r > 0);
+    PASS(); return 0;
+}
+
 static int test_fp_div() {
     TEST("fp_div 10 / 2 = 5");
     CHECK(MC_REAL_TO_INT(mc_fp_div(MC_FP_C(10), MC_FP_C(2))) == 5);
@@ -70,6 +119,14 @@ static int test_fp_div_by_zero() {
     PASS(); return 0;
 }
 
+static int test_fp_div_fractional() {
+    TEST("fp_div 1 / 2 ≈ 0.5 (truncates to 0 as int)");
+    mc_real_t r = mc_fp_div(MC_FP_C(1), MC_FP_C(2));
+    CHECK(MC_REAL_TO_INT(r) == 0);
+    CHECK(r > 0);
+    PASS(); return 0;
+}
+
 static int test_fp_sqrt() {
     TEST("fp_sqrt perfect squares 0, 1, 4, 9, 16, 100");
     CHECK(MC_REAL_TO_INT(mc_fp_sqrt(MC_FP_C(0))) == 0);
@@ -84,6 +141,15 @@ static int test_fp_sqrt() {
 static int test_fp_sqrt_negative() {
     TEST("fp_sqrt of negative returns 0");
     CHECK(mc_fp_sqrt(MC_FP_C(-1)) == MC_FP_C(0));
+    PASS(); return 0;
+}
+
+static int test_fp_sqrt_non_perfect() {
+    TEST("fp_sqrt non-perfect square (2) is positive");
+    mc_real_t r = mc_fp_sqrt(MC_FP_C(2));
+    mc_real_t approx = mc_fp_mul(r, r);
+    CHECK(approx > 0);
+    CHECK(approx < MC_FP_C(3));
     PASS(); return 0;
 }
 
@@ -114,6 +180,13 @@ static int test_vec2_ops() {
     mc_vec2_t lerped = mc_vec2_lerp(a, b, MC_FP_C(0.5f));
     CHECK(MC_REAL_TO_INT(lerped.x) == 2 && MC_REAL_TO_INT(lerped.y) == 3);
 
+    PASS(); return 0;
+}
+
+static int test_vec2_zero_normalize() {
+    TEST("vec2 normalize zero vector returns (0,0)");
+    mc_vec2_t z = mc_vec2_normalize(mc_vec2(0, 0));
+    CHECK(z.x == 0 && z.y == 0);
     PASS(); return 0;
 }
 
@@ -153,6 +226,21 @@ static int test_rect_contains() {
     PASS(); return 0;
 }
 
+static int test_rect_contains_edge() {
+    TEST("rect contains on exact edge returns true for min, false for max");
+    mc_rect_t r = { 0, 0, MC_FP_C(100), MC_FP_C(50) };
+    CHECK(mc_rect_contains(r, mc_vec2(0, 0)) == true);
+    CHECK(mc_rect_contains(r, mc_vec2(MC_FP_C(100), MC_FP_C(50))) == false);
+    PASS(); return 0;
+}
+
+static int test_rect_zero_size() {
+    TEST("rect with zero width/height contains no points");
+    mc_rect_t r = { 0, 0, 0, 0 };
+    CHECK(mc_rect_contains(r, mc_vec2(0, 0)) == false);
+    PASS(); return 0;
+}
+
 static int test_rect_overlaps() {
     TEST("rect overlaps another rect");
     mc_rect_t a = { 0, 0, MC_FP_C(100), MC_FP_C(100) };
@@ -163,23 +251,43 @@ static int test_rect_overlaps() {
     PASS(); return 0;
 }
 
+static int test_rect_self_overlap() {
+    TEST("rect always overlaps itself");
+    mc_rect_t a = { MC_FP_C(10), MC_FP_C(10), MC_FP_C(50), MC_FP_C(50) };
+    CHECK(mc_rect_overlaps(a, a) == true);
+    PASS(); return 0;
+}
+
 int main() {
     int failed = 0;
     failed += test_clamp();
+    failed += test_clamp_equal_min_max();
     failed += test_lerp();
+    failed += test_lerp_negative_range();
+    failed += test_lerp_t_out_of_range();
     failed += test_map();
+    failed += test_map_out_of_range();
+    failed += test_map_inverted_range();
     failed += test_fp_mul();
     failed += test_fp_mul_negative();
     failed += test_fp_mul_zero();
+    failed += test_fp_mul_saturation();
+    failed += test_fp_mul_fractional();
     failed += test_fp_div();
     failed += test_fp_div_negative();
     failed += test_fp_div_by_zero();
+    failed += test_fp_div_fractional();
     failed += test_fp_sqrt();
     failed += test_fp_sqrt_negative();
+    failed += test_fp_sqrt_non_perfect();
     failed += test_vec2_ops();
+    failed += test_vec2_zero_normalize();
     failed += test_vec4_ops();
     failed += test_rect_contains();
+    failed += test_rect_contains_edge();
+    failed += test_rect_zero_size();
     failed += test_rect_overlaps();
+    failed += test_rect_self_overlap();
     printf("Math: %d/%d passed\n", tests_passed, tests_run);
     return failed;
 }

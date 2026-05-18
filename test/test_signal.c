@@ -2,9 +2,9 @@
 #include "mc_signal.h"
 
 static int calls = 0;
-static void handler1(void* ctx, void* args) { calls++; *(int*)args += 1; }
-static void handler2(void* ctx, void* args) { calls++; *(int*)args += 2; }
-static void handler3(void* ctx, void* args) { calls++; *(int*)args += 3; }
+static void handler1(void* ctx, void* args) { calls++; if (args) *(int*)args += 1; }
+static void handler2(void* ctx, void* args) { calls++; if (args) *(int*)args += 2; }
+static void handler3(void* ctx, void* args) { calls++; if (args) *(int*)args += 3; }
 
 static int tests_run = 0, tests_passed = 0;
 #define TEST(n) do { tests_run++; printf("  %s ... ", n); } while(0)
@@ -27,7 +27,7 @@ static int test_signal_emit() {
 }
 
 static int test_signal_disconnect() {
-    TEST("connect 2, disconnect 1, emit");
+    TEST("connect 2, disconnect 1, emit remaining");
     mc_signal_t sig;
     mc_signal_init(&sig, 5);
     mc_signal_connect(&sig, handler1, NULL);
@@ -71,7 +71,7 @@ static int test_double_disconnect() {
 }
 
 static int test_null_emit() {
-    TEST("emit with no connected slots (no crash)");
+    TEST("emit with no connected slots is no-op");
     mc_signal_t sig;
     mc_signal_init(&sig, 5);
     int val = 0;
@@ -82,7 +82,7 @@ static int test_null_emit() {
 }
 
 static int test_many_slots() {
-    TEST("connect 10 handlers, emit once");
+    TEST("connect 10 handlers, emit once, all fire");
     mc_signal_t sig;
     mc_signal_init(&sig, 10);
     for (int i = 0; i < 10; i++)
@@ -96,6 +96,48 @@ static int test_many_slots() {
     PASS(); return 0;
 }
 
+static int test_emit_null_args() {
+    TEST("emit with NULL args does not crash");
+    mc_signal_t sig;
+    mc_signal_init(&sig, 5);
+    mc_signal_connect(&sig, handler1, NULL);
+    calls = 0;
+    mc_signal_emit(&sig, NULL);
+    CHECK(calls == 1);
+    mc_signal_deinit(&sig);
+    PASS(); return 0;
+}
+
+static int test_connect_with_context() {
+    TEST("connect with ctx, disconnect matches both cb and ctx");
+    mc_signal_t sig;
+    mc_signal_init(&sig, 5);
+    int ctx_a = 1, ctx_b = 2;
+    mc_signal_connect(&sig, handler1, &ctx_a);
+    mc_signal_connect(&sig, handler1, &ctx_b);
+    mc_signal_disconnect(&sig, handler1, &ctx_a);
+    calls = 0;
+    mc_signal_emit(&sig, NULL);
+    CHECK(calls == 1);
+    mc_signal_deinit(&sig);
+    PASS(); return 0;
+}
+
+static int test_reinit_after_deinit() {
+    TEST("reinit after deinit works cleanly");
+    mc_signal_t sig;
+    mc_signal_init(&sig, 5);
+    mc_signal_connect(&sig, handler1, NULL);
+    mc_signal_deinit(&sig);
+    mc_signal_init(&sig, 3);
+    CHECK(mc_signal_connect(&sig, handler2, NULL) == MC_OK);
+    int val = 0;
+    mc_signal_emit(&sig, &val);
+    CHECK(val == 2);
+    mc_signal_deinit(&sig);
+    PASS(); return 0;
+}
+
 int main() {
     int failed = 0;
     failed += test_signal_emit();
@@ -104,6 +146,9 @@ int main() {
     failed += test_double_disconnect();
     failed += test_null_emit();
     failed += test_many_slots();
+    failed += test_emit_null_args();
+    failed += test_connect_with_context();
+    failed += test_reinit_after_deinit();
     printf("Signal: %d/%d passed\n", tests_passed, tests_run);
     return failed;
 }
