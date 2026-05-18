@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "mc_pool.h"
+#include "mc_allocator.h"
 
 static int tests_run = 0, tests_passed = 0;
 #define TEST(n) do { tests_run++; printf("  %s ... ", n); } while(0)
@@ -120,6 +122,20 @@ static int test_release_invalid() {
     PASS(); return 0;
 }
 
+static void* fail_alloc(size_t size, void* ctx) { return NULL; }
+static void noop_free(void* ptr, void* ctx) { }
+
+static int test_init_nomem() {
+    TEST("pool init with failing allocator returns MC_ERR_NOMEM");
+    mc_allocator_t fail_allocator = { fail_alloc, noop_free, NULL };
+    mc_allocator_set(&fail_allocator);
+    mc_pool_t pool;
+    int rc = mc_pool_init(&pool, sizeof(int), 10);
+    CHECK(rc == MC_ERR_NOMEM);
+    mc_allocator_set(NULL);
+    PASS(); return 0;
+}
+
 int main() {
     int failed = 0;
     failed += test_acquire_release();
@@ -130,6 +146,7 @@ int main() {
     failed += test_zero_capacity();
     failed += test_lifo_order();
     failed += test_release_invalid();
+    failed += test_init_nomem();
     printf("Pool: %d/%d passed\n", tests_passed, tests_run);
     return failed;
 }

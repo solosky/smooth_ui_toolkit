@@ -226,6 +226,86 @@ static int test_vec4_animate_move_to() {
     PASS(); return 0;
 }
 
+static int test_vec4_animate_spring() {
+    TEST("vec4 spring animate moves toward target");
+    mc_vec4_animate_t va;
+    mc_vec4_animate_init_spring(&va,
+        mc_vec4(0, 0, 0, 0),
+        mc_vec4(MC_FP_C(100), MC_FP_C(100), MC_FP_C(100), MC_FP_C(100)));
+    mc_vec4_animate_update(&va, MC_FP_C(1.0f / 60.0f));
+    CHECK(va.current.x > 0);
+    CHECK(va.current.y > 0);
+    CHECK(va.current.z > 0);
+    CHECK(va.current.w > 0);
+    PASS(); return 0;
+}
+
+static int test_vec2_animate_easing_partial() {
+    TEST("vec2 easing at t=0.5 = halfway");
+    mc_vec2_animate_t va;
+    mc_vec2_animate_init_easing(&va,
+        mc_vec2(0, 0),
+        mc_vec2(MC_FP_C(100), MC_FP_C(200)),
+        MC_FP_C(1));
+    va.config.easing.easing = mc_ease_linear;
+    bool done = mc_vec2_animate_update(&va, MC_FP_C(0.5f));
+    CHECK(done == false);
+    CHECK(MC_REAL_TO_INT(va.current.x) == 50);
+    CHECK(MC_REAL_TO_INT(va.current.y) == 100);
+    PASS(); return 0;
+}
+
+static int test_vec2_animate_delay() {
+    TEST("vec2 easing with delay delays start");
+    mc_vec2_animate_t va;
+    mc_vec2_animate_init_easing(&va,
+        mc_vec2(0, 0),
+        mc_vec2(MC_FP_C(100), MC_FP_C(100)),
+        MC_FP_C(1));
+    va.delay = MC_FP_C(0.5f);
+    va.config.easing.easing = mc_ease_linear;
+    bool done = mc_vec2_animate_update(&va, MC_FP_C(0.3f));
+    CHECK(done == false);
+    CHECK(va.current.x == 0);
+    done = mc_vec2_animate_update(&va, MC_FP_C(0.3f));
+    CHECK(done == false);
+    CHECK(va.current.x > 0);
+    PASS(); return 0;
+}
+
+static int test_vec4_animate_easing_partial() {
+    TEST("vec4 easing at t=0.5 = halfway");
+    mc_vec4_animate_t va;
+    mc_vec4_animate_init_easing(&va,
+        mc_vec4(0, 0, 0, 0),
+        mc_vec4(MC_FP_C(10), MC_FP_C(20), MC_FP_C(30), MC_FP_C(40)),
+        MC_FP_C(1));
+    va.config.easing.easing = mc_ease_linear;
+    bool done = mc_vec4_animate_update(&va, MC_FP_C(0.5f));
+    CHECK(done == false);
+    CHECK(MC_REAL_TO_INT(va.current.x) == 5);
+    CHECK(MC_REAL_TO_INT(va.current.w) == 20);
+    PASS(); return 0;
+}
+
+static int test_vec4_animate_delay() {
+    TEST("vec4 easing with delay delays start");
+    mc_vec4_animate_t va;
+    mc_vec4_animate_init_easing(&va,
+        mc_vec4(0, 0, 0, 0),
+        mc_vec4(MC_FP_C(100), MC_FP_C(100), MC_FP_C(100), MC_FP_C(100)),
+        MC_FP_C(1));
+    va.delay = MC_FP_C(0.5f);
+    va.config.easing.easing = mc_ease_linear;
+    bool done = mc_vec4_animate_update(&va, MC_FP_C(0.3f));
+    CHECK(done == false);
+    CHECK(va.current.x == 0);
+    done = mc_vec4_animate_update(&va, MC_FP_C(0.3f));
+    CHECK(done == false);
+    CHECK(va.current.x > 0);
+    PASS(); return 0;
+}
+
 int main() {
     int failed = 0;
     failed += test_easing_anim_completes();
@@ -245,6 +325,11 @@ int main() {
     failed += test_vec2_animate_callback();
     failed += test_vec4_animate_easing();
     failed += test_vec4_animate_move_to();
+    failed += test_vec4_animate_spring();
+    failed += test_vec2_animate_easing_partial();
+    failed += test_vec2_animate_delay();
+    failed += test_vec4_animate_easing_partial();
+    failed += test_vec4_animate_delay();
     printf("Animate: %d/%d passed\n", tests_passed, tests_run);
     return failed;
 }

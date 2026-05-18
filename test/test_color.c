@@ -137,6 +137,13 @@ static int test_hsv_partial_saturation() {
     PASS(); return 0;
 }
 
+static int test_hsv_magenta() {
+    TEST("hsv(300, 100%, 100%) = magenta (case 5)");
+    mc_rgb_t c = mc_rgb_from_hsv(MC_FP_C(300), MC_FP_C(1), MC_FP_C(1));
+    CHECK(c.r == 255); CHECK(c.g == 0); CHECK(c.b == 255);
+    PASS(); return 0;
+}
+
 int main() {
     int failed = 0;
     failed += test_hex_conversion();
@@ -154,6 +161,7 @@ int main() {
     failed += test_hsv_black();
     failed += test_hsv_zero_saturation();
     failed += test_hsv_partial_saturation();
+    failed += test_hsv_magenta();
     printf("Color: %d/%d passed\n", tests_passed, tests_run);
     return failed;
 }

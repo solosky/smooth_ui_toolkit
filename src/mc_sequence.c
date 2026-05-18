@@ -48,14 +48,13 @@ bool mc_sequence_update(mc_sequence_t* s, mc_real_t dt) {
         if (t > MC_FP_C(1)) {
             s->elapsed -= s->steps[s->current].duration;
             s->current++;
-            if (s->current >= s->count) {
-                if (s->on_complete) s->on_complete(s->ctx);
-                return true;
-            }
+            if (s->current >= s->count)
+                break;
             if (s->on_step) s->on_step(s->ctx, s->current);
         } else {
             return false;
         }
     }
+    if (s->on_complete) s->on_complete(s->ctx);
     return true;
 }
